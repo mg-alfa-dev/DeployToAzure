@@ -26,8 +26,7 @@ namespace DeployToAzure.Utility
             _elements = new List<XElement>(elements);
         }
 
-        public override bool TryGetMember(
-             GetMemberBinder binder, out object result)
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             result = null;
             switch (binder.Name)
@@ -48,7 +47,10 @@ namespace DeployToAzure.Utility
                             var items = _elements.Descendants(XName.Get(binder.Name));
                             if (items == null)
                                 return true;
-                            result = new DynamicXml(items);
+                            var itemsArray = items.ToArray();
+                            if (itemsArray.Length == 0)
+                                return false;
+                            result = new DynamicXml(itemsArray);
                         }
                     }
                     break;
