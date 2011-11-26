@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -11,11 +10,11 @@ namespace DeployToAzure.Utility
         {
             var memberExpr = fieldRef.Body as MemberExpression;
             if (memberExpr == null)
-                throw new InvalidExpressionException("Expected a MemberExpression at the top level.");
+                throw new InvalidOperationException("Expected a MemberExpression at the top level.");
 
             var fieldInfo = memberExpr.Member as FieldInfo;
             if (fieldInfo == null)
-                throw new InvalidExpressionException("Expected the MemberExpression to reference a field.");
+                throw new InvalidOperationException("Expected the MemberExpression to reference a field.");
 
             return fieldInfo;
         }
@@ -30,11 +29,11 @@ namespace DeployToAzure.Utility
 
             var memberExpr = body as MemberExpression;
             if (memberExpr == null)
-                throw new InvalidExpressionException("Expected a MemberExpression at the top level.");
+                throw new InvalidOperationException("Expected a MemberExpression at the top level.");
 
             var propertyInfo = memberExpr.Member as PropertyInfo;
             if (propertyInfo == null)
-                throw new InvalidExpressionException("Expected the MemberExpression to reference a property.");
+                throw new InvalidOperationException("Expected the MemberExpression to reference a property.");
 
             return propertyInfo.Name;
         }
@@ -43,11 +42,11 @@ namespace DeployToAzure.Utility
         {
             var memberExpr = propertyRefClosure.Body as MemberExpression;
             if (memberExpr == null)
-                throw new InvalidExpressionException("Expected a MemberExpression at the top level.");
+                throw new InvalidOperationException("Expected a MemberExpression at the top level.");
 
             var propertyInfo = memberExpr.Member as PropertyInfo;
             if (propertyInfo == null)
-                throw new InvalidExpressionException("Expected the MemberExpression to reference a property.");
+                throw new InvalidOperationException("Expected the MemberExpression to reference a property.");
 
             return propertyInfo.Name;
         }
@@ -61,11 +60,11 @@ namespace DeployToAzure.Utility
 
             var memberExpr = root as MemberExpression;
             if (memberExpr == null)
-                throw new InvalidExpressionException("Expected a MemberExpression at the top level.");
+                throw new InvalidOperationException("Expected a MemberExpression at the top level.");
 
             var propertyInfo = memberExpr.Member as PropertyInfo;
             if (propertyInfo == null)
-                throw new InvalidExpressionException("Expected the MemberExpression to reference a property.");
+                throw new InvalidOperationException("Expected the MemberExpression to reference a property.");
 
             return propertyInfo.Name;
         }
@@ -75,11 +74,11 @@ namespace DeployToAzure.Utility
             var root = methodRefClosure.Body;
             var methodCallExpression = root as MethodCallExpression;
             if (methodCallExpression == null)
-                throw new InvalidExpressionException("Expected a MethodCallExpression at the top level.");
+                throw new InvalidOperationException("Expected a MethodCallExpression at the top level.");
 
             var methodInfo = methodCallExpression.Method;
             if (methodInfo == null)
-                throw new InvalidExpressionException("Expected the MethodCallExpression to reference a method.");
+                throw new InvalidOperationException("Expected the MethodCallExpression to reference a method.");
 
             return methodInfo.Name;
         }
@@ -94,11 +93,11 @@ namespace DeployToAzure.Utility
             var root = methodRefClosure.Body;
             var methodCallExpression = root as MethodCallExpression;
             if (methodCallExpression == null)
-                throw new InvalidExpressionException("Expected a MethodCallExpression at the top level.");
+                throw new InvalidOperationException("Expected a MethodCallExpression at the top level.");
 
             var methodInfo = methodCallExpression.Method;
             if (methodInfo == null)
-                throw new InvalidExpressionException("Expected the MethodCallExpression to reference a method.");
+                throw new InvalidOperationException("Expected the MethodCallExpression to reference a method.");
 
             return methodInfo;
         }
