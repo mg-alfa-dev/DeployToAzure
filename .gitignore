@@ -2,6 +2,7 @@ _ReSharper*
 *.sln.docstates
 bin
 Bin
+build
 obj
 *.suo
 *.ncb
