@@ -1,0 +1,15 @@
+_ReSharper*
+*.sln.docstates
+bin
+Bin
+obj
+*.suo
+*.ncb
+*.vsp
+*.user
+.svn
+*.sln.cache
+*.orig
+*.swp
+\#*#
+*.build.*

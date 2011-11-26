@@ -1,0 +1,15 @@
+*.cs       eol=crlf
+*.csproj   eol=crlf
+*.sln      eol=crlf
+*.csdef    eol=crlf
+*.cfg      eol=crlf
+*.cscfg    eol=crlf
+*.config   eol=crlf
+*.cmd      eol=crlf
+*.ccproj   eol=crlf
+*.ini      eol=crlf
+*.manifest eol=crlf
+*.ps1      eol=crlf
+*.txt      eol=crlf
+*.xml      eol=crlf
+*.xsd      eol=crlf
