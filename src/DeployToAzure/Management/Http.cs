@@ -90,21 +90,16 @@ namespace DeployToAzure.Management
             {
                 OurTrace.TraceError(exception.ToString());
                 OurTrace.TraceError("message: " + exception.Message);
-                OurTrace.TraceError("response: " + MakeResponseString(exception));
 
-                if (exception.Response is HttpWebResponse)
+                var responseContent = GetResponseContent(exception);
+                OurTrace.TraceError("response: " + responseContent);
+
+                var httpWebResponse = exception.Response as HttpWebResponse;
+                if(httpWebResponse != null)
                 {
-                    OurTrace.TraceError("HttpWebResponse");
-                    OurTrace.TraceError((exception.Response as HttpWebResponse).ToString());
-                    var response = ((HttpWebResponse)exception.Response);
-                    using (var str = response.GetResponseStream())
-                    {
-                        FailFast.IfNull(str, "response stream");
-                        var responseContent = new StreamReader(str).ReadToEnd();
-                        OurTrace.TraceError("Response:" + response);
-                        OurTrace.TraceError("responseContent:" + responseContent);
-                        return new HttpResponse(response.StatusCode, responseContent);
-                    }
+                    OurTrace.TraceError("response.StatusCode: " + httpWebResponse.StatusCode);
+                    OurTrace.TraceError("response.StatusDescription: " + httpWebResponse.StatusDescription);
+                    return new HttpResponse(httpWebResponse.StatusCode, responseContent);
                 }
                 throw new UnhandledHttpException("Unhandled Http exception.", exception);
             }
@@ -114,15 +109,16 @@ namespace DeployToAzure.Management
             }
         }
 
-        private static string MakeResponseString(WebException exception)
+        private static string GetResponseContent(WebException exception)
         {
-            if (exception.Response == null)
-                return "(null)";
-            using (var responseStream = exception.Response.GetResponseStream())
-            {
-                FailFast.IfNull(responseStream, "response stream");
-                return new StreamReader(responseStream).ReadToEnd();
-            }
+            var responseContent = "";
+            if (exception.Response != null)
+                using (var responseStream = exception.Response.GetResponseStream())
+                {
+                    FailFast.IfNull(responseStream, "response stream");
+                    responseContent = new StreamReader(responseStream).ReadToEnd();
+                }
+            return responseContent;
         }
 
         private HttpWebRequest Request(string uri, string method)
