@@ -23,6 +23,7 @@ namespace DeployToAzure
             string serviceConfigurationPath = arguments.ServiceConfigurationPath.Value;
             string deploymentLabel = arguments.DeploymentLabel.Value;
             string deploymentName = arguments.DeploymentName.Value;
+            string roleName = arguments.RoleName.Value;
 
             OurTrace.TraceInfo("Using parameters:");
             OurTrace.TraceInfo(string.Format("subscriptionId: {0}", subscriptionId));
@@ -36,6 +37,7 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("serviceConfigurationPath: {0}", serviceConfigurationPath));
             OurTrace.TraceInfo(string.Format("deploymentLabel: {0}", deploymentLabel));
             OurTrace.TraceInfo(string.Format("deploymentName: {0}", deploymentName));
+            OurTrace.TraceInfo(string.Format("roleName: {0}", roleName));
 
             var packageUrl = string.Format("https://{0}.blob.core.windows.net/deployment-package/{1}.cspkg", storageAccountName, Guid.NewGuid());
 
@@ -53,6 +55,7 @@ namespace DeployToAzure
                                     StorageAccountKey = storageAccountKey,
                                     CertFileName = certFileName,
                                     CertPassword = certPassword,
+                                    RoleName = roleName,
                                 };
         }
     }

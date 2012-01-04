@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using DeployToAzure.Management;
 using DeployToAzure.Utility;
@@ -18,7 +17,7 @@ namespace DeployToAzure
             OurTrace.AddListener(consoleTraceListener);
             OurTrace.Source.Switch.Level = SourceLevels.All;
 
-            if(args.Length != 1)
+            if(args.Length < 1)
             {
                 Usage();
                 return 0;
@@ -72,6 +71,7 @@ namespace DeployToAzure
             Console.WriteLine("    <ServiceConfigurationPath>(path to your cspkg file)</ServiceConfigurationPath>");
             Console.WriteLine("    <DeploymentLabel>(deployment label)</DeploymentLabel>");
             Console.WriteLine("    <DeploymentName>(deployment name)</DeploymentName>");
+            Console.WriteLine("    <RoleName>(role name)</RoleName>");
             Console.WriteLine("  </Params>");
         }
 

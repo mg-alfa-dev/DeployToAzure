@@ -39,6 +39,7 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
                 writer.WriteLine("    <ServiceConfigurationPath>{0}</ServiceConfigurationPath>",serviceConfigurationPath);
                 writer.WriteLine("    <DeploymentLabel>deployment label</DeploymentLabel>");
                 writer.WriteLine("    <DeploymentName>deployment name</DeploymentName>");
+                writer.WriteLine("    <RoleName>role name</RoleName>");
                 writer.WriteLine("  </Params>");
             }
 
@@ -109,6 +110,12 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
         public void it_parses_the_cert_password()
         {
            Assert.That(configuration.CertPassword, Is.EqualTo("cert password"));
+        }
+
+        [Test]
+        public void it_parses_the_role_name()
+        {
+           Assert.That(configuration.RoleName, Is.EqualTo("role name"));
         }
     }
 }

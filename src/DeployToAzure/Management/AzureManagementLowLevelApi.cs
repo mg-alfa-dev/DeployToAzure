@@ -70,10 +70,10 @@ namespace DeployToAzure.Management
         public RequestUri BeginUpgrade(DeploymentSlotUri deploymentUri, DeploymentConfiguration configuration)
         {
             OurTrace.TraceVerbose("BeginUpgrade");
-            var xml = configuration.MakeCreateDeploymentMessage();
+            var xml = configuration.MakeUpgradeDeploymentMessage();
             OurTrace.TraceInfo(xml);
 
-            var response = _http.Post(deploymentUri.ToString(), xml);
+            var response = _http.Post(deploymentUri + "/?comp=upgrade", xml);
             var statusCode = response.StatusCode;
 
             if (statusCode.IsAccepted())
