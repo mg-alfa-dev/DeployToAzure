@@ -11,6 +11,7 @@ namespace DeployToAzure.Management
         void Create(DeploymentSlotUri deploymentUri, IDeploymentConfiguration configuration);
         void Suspend(DeploymentSlotUri deploymentUri);
         void Delete(DeploymentSlotUri deploymentUri);
+        void Upgrade(DeploymentSlotUri deploymentSlotUri, DeploymentConfiguration configuration);
     }
 
     public class AzureManagementApiWithRetries: IAzureManagementApiWithRetries
@@ -79,6 +80,11 @@ namespace DeployToAzure.Management
         public void Delete(DeploymentSlotUri deploymentUri)
         {
             ExecuteAsynchronousAction(() => _managementLowLevelApi.BeginDelete(deploymentUri));
+        }
+
+        public void Upgrade(DeploymentSlotUri deploymentSlotUri, DeploymentConfiguration configuration)
+        {
+            ExecuteAsynchronousAction(() => _managementLowLevelApi.BeginUpgrade(deploymentSlotUri, configuration));
         }
 
         private void ExecuteAsynchronousAction(Func<RequestUri> action)

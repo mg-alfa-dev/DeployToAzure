@@ -1,3 +1,5 @@
+using System;
+
 namespace DeployToAzure.Management
 {
     public interface IAzureDeploymentSlot
@@ -33,6 +35,12 @@ namespace DeployToAzure.Management
             _apiWithRetries.WaitForDeploymentStatus(_deploymentSlotUri, AzureDeploymentCheckOutcome.Suspended);
             _apiWithRetries.Delete(_deploymentSlotUri);
             _apiWithRetries.WaitForDeploymentStatus(_deploymentSlotUri, AzureDeploymentCheckOutcome.NotFound);
+        }
+
+        public void UpgradeDeployment(DeploymentConfiguration configuration)
+        {
+            _apiWithRetries.Upgrade(_deploymentSlotUri, configuration);
+            _apiWithRetries.WaitForDeploymentStatus(_deploymentSlotUri, AzureDeploymentCheckOutcome.Running);
         }
     }
 }

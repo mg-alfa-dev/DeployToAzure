@@ -67,6 +67,25 @@ namespace DeployToAzure.Management
             }
         }
 
+        public RequestUri BeginUpgrade(DeploymentSlotUri deploymentUri, DeploymentConfiguration configuration)
+        {
+            OurTrace.TraceVerbose("BeginUpgrade");
+            var xml = configuration.MakeCreateDeploymentMessage();
+            OurTrace.TraceInfo(xml);
+
+            var response = _http.Post(deploymentUri.ToString(), xml);
+            var statusCode = response.StatusCode;
+
+            if (statusCode.IsAccepted())
+                return deploymentUri.ToRequestUri(response.AzureRequestIdHeader);
+
+            if (statusCode.IsConflict())
+                return null;
+
+            ThrowUnexpectedHttpResponse(response);
+            return null; // can't be reached.
+        }
+
         public RequestUri BeginSuspend(DeploymentSlotUri deploymentUri)
         {
             OurTrace.TraceVerbose("BeginSuspend");
@@ -92,7 +111,7 @@ namespace DeployToAzure.Management
         public RequestUri BeginCreate(DeploymentSlotUri deploymentUri, IDeploymentConfiguration configuration)
         {
             OurTrace.TraceVerbose("BeginCreate");
-            var xml = configuration.ToXmlString();
+            var xml = configuration.MakeCreateDeploymentMessage();
             OurTrace.TraceInfo(xml);
 
             var response = _http.Post(deploymentUri.ToString(), xml);

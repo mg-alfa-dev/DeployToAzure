@@ -22,7 +22,7 @@ namespace DeployToAzure.Tests.Management
             var api = new AzureManagementLowLevelApi(http);
 
             var config = MockRepository.GenerateStub<IDeploymentConfiguration>();
-            config.Stub(x => x.ToXmlString()).Return("foo");
+            config.Stub(x => x.MakeCreateDeploymentMessage()).Return("foo");
             var requestUrl = api.BeginCreate(TestDeploymentUri, config);
 
             Assert.That(http.LastPostUri, Is.EqualTo(TestDeploymentUri.ToString()), "deploymentUri parameter incorrect");

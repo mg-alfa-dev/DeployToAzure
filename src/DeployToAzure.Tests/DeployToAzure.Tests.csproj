@@ -46,6 +46,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigurationParserTests.cs" />
     <Compile Include="Management\AzureDeploymentLowLevelApi_BeginCreateDeployment_Tests.cs" />
     <Compile Include="Management\AzureDeploymentLowLevelApi_BeginDelete_Tests.cs" />
     <Compile Include="Management\AzureDeploymentLowLevelApi_BeginSuspend_Tests.cs" />
