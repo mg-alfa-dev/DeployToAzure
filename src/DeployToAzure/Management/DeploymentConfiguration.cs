@@ -53,16 +53,15 @@ namespace DeployToAzure.Management
 <UpgradeDeployment xmlns=""http://schemas.microsoft.com/windowsazure"">
     <Mode>{0}</Mode>
     <PackageUrl>{1}</PackageUrl>
-    <Configuration>{3}</Configuration>
-    <Label>{2}</Label>
-    <RoleToUpgrade>{4}</RoleToUpgrade>
-    <Force>{5}</Force>
+    <Configuration>{2}</Configuration>
+    <Label>{3}</Label>
+    <Force>{4}</Force>
 </UpgradeDeployment>";
 
             var label = Convert.ToBase64String(Encoding.ASCII.GetBytes(DeploymentLabel));
-            return string.Format(format, UpgradeMode.ToString().ToLower(), PackageUrl, label,
-                                 Convert.ToBase64String(Encoding.ASCII.GetBytes(ServiceConfiguration)),
-                                 RoleName, Force.ToString().ToLower());
+            return string.Format(format, UpgradeMode, PackageUrl, 
+                Convert.ToBase64String(Encoding.ASCII.GetBytes(ServiceConfiguration)), 
+                label, Force.ToString().ToLower());
         }
     }
 }

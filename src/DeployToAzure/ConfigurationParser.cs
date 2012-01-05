@@ -24,6 +24,7 @@ namespace DeployToAzure
             string deploymentLabel = arguments.DeploymentLabel.Value;
             string deploymentName = arguments.DeploymentName.Value;
             string roleName = arguments.RoleName.Value;
+            string force = arguments.Force.Value ?? "false";
 
             OurTrace.TraceInfo("Using parameters:");
             OurTrace.TraceInfo(string.Format("subscriptionId: {0}", subscriptionId));
@@ -38,25 +39,27 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("deploymentLabel: {0}", deploymentLabel));
             OurTrace.TraceInfo(string.Format("deploymentName: {0}", deploymentName));
             OurTrace.TraceInfo(string.Format("roleName: {0}", roleName));
+            OurTrace.TraceInfo(string.Format("force: {0}", force));
 
             var packageUrl = string.Format("https://{0}.blob.core.windows.net/deployment-package/{1}.cspkg", storageAccountName, Guid.NewGuid());
 
             var serviceConfigurationString = File.ReadAllText(serviceConfigurationPath);
 
             return new DeploymentConfiguration
-                                {
-                                    DeploymentLabel = deploymentLabel,
-                                    DeploymentName = deploymentName,
-                                    DeploymentSlotUri = new DeploymentSlotUri(subscriptionId, serviceName, deploymentSlot),
-                                    PackageUrl = packageUrl,
-                                    ServiceConfiguration = serviceConfigurationString,
-                                    PackageFileName = packageFileName,
-                                    StorageAccountName = storageAccountName,
-                                    StorageAccountKey = storageAccountKey,
-                                    CertFileName = certFileName,
-                                    CertPassword = certPassword,
-                                    RoleName = roleName,
-                                };
+            {
+                DeploymentLabel = deploymentLabel,
+                DeploymentName = deploymentName,
+                DeploymentSlotUri = new DeploymentSlotUri(subscriptionId, serviceName, deploymentSlot),
+                PackageUrl = packageUrl,
+                ServiceConfiguration = serviceConfigurationString,
+                PackageFileName = packageFileName,
+                StorageAccountName = storageAccountName,
+                StorageAccountKey = storageAccountKey,
+                CertFileName = certFileName,
+                CertPassword = certPassword,
+                RoleName = roleName,
+                Force = bool.Parse(force),
+            };
         }
     }
 }

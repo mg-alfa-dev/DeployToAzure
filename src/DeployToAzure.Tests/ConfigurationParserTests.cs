@@ -40,6 +40,7 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
                 writer.WriteLine("    <DeploymentLabel>deployment label</DeploymentLabel>");
                 writer.WriteLine("    <DeploymentName>deployment name</DeploymentName>");
                 writer.WriteLine("    <RoleName>role name</RoleName>");
+                writer.WriteLine("    <Force>true</Force>");
                 writer.WriteLine("  </Params>");
             }
 
@@ -116,6 +117,12 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
         public void it_parses_the_role_name()
         {
            Assert.That(configuration.RoleName, Is.EqualTo("role name"));
+        }
+
+        [Test]
+        public void it_parses_the_force_setting()
+        {
+            Assert.That(configuration.Force);
         }
     }
 }
