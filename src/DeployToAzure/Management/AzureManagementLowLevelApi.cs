@@ -185,6 +185,8 @@ namespace DeployToAzure.Management
                     return AzureDeploymentCheckOutcome.Suspended;
                 case "Deploying":
                     return AzureDeploymentCheckOutcome.Deploying;
+                case "RunningTransitioning":
+                    return AzureDeploymentCheckOutcome.RunningTransitioning;
                 default:
                     throw new InvalidOperationException("Unexpected status text: " + statusText);
             }

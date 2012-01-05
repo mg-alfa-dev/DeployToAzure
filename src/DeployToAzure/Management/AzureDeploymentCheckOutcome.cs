@@ -10,5 +10,6 @@ namespace DeployToAzure.Management
         Starting,
         Deploying,
         Suspending,
+        RunningTransitioning
     }
 }

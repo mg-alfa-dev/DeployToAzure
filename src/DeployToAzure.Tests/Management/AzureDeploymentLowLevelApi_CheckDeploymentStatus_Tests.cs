@@ -50,6 +50,19 @@ namespace DeployToAzure.Tests.Management
         }
 
         [Test]
+        public void ReturnsRunningTransitioningIfRunningTransitioning()
+        {
+            var http = new ScriptedHttpFake();
+
+            http.Script.Add(() => http.NextResponse = new HttpResponse(HttpStatusCode.OK, "<xml><Status>RunningTransitioning</Status></xml>"));
+
+            var api = new AzureManagementLowLevelApi(http);
+            var status = api.CheckDeploymentStatus(TestDeploymentUri);
+
+            Assert.That(status, Is.EqualTo(AzureDeploymentCheckOutcome.RunningTransitioning));
+        }
+
+        [Test]
         public void ReturnsFailedIfStatusCodeNotOk()
         {
             var http = new ScriptedHttpFake();
