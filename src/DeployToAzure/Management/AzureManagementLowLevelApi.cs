@@ -67,6 +67,25 @@ namespace DeployToAzure.Management
             }
         }
 
+        public RequestUri BeginUpgrade(DeploymentSlotUri deploymentUri, DeploymentConfiguration configuration)
+        {
+            OurTrace.TraceVerbose("BeginUpgrade");
+            var xml = configuration.MakeUpgradeDeploymentMessage();
+            OurTrace.TraceInfo(xml);
+
+            var response = _http.Post(deploymentUri + "/?comp=upgrade", xml);
+            var statusCode = response.StatusCode;
+
+            if (statusCode.IsAccepted())
+                return deploymentUri.ToRequestUri(response.AzureRequestIdHeader);
+
+            if (statusCode.IsConflict())
+                return null;
+
+            ThrowUnexpectedHttpResponse(response);
+            return null; // can't be reached.
+        }
+
         public RequestUri BeginSuspend(DeploymentSlotUri deploymentUri)
         {
             OurTrace.TraceVerbose("BeginSuspend");
@@ -92,7 +111,7 @@ namespace DeployToAzure.Management
         public RequestUri BeginCreate(DeploymentSlotUri deploymentUri, IDeploymentConfiguration configuration)
         {
             OurTrace.TraceVerbose("BeginCreate");
-            var xml = configuration.ToXmlString();
+            var xml = configuration.MakeCreateDeploymentMessage();
             OurTrace.TraceInfo(xml);
 
             var response = _http.Post(deploymentUri.ToString(), xml);
@@ -166,6 +185,8 @@ namespace DeployToAzure.Management
                     return AzureDeploymentCheckOutcome.Suspended;
                 case "Deploying":
                     return AzureDeploymentCheckOutcome.Deploying;
+                case "RunningTransitioning":
+                    return AzureDeploymentCheckOutcome.RunningTransitioning;
                 default:
                     throw new InvalidOperationException("Unexpected status text: " + statusText);
             }

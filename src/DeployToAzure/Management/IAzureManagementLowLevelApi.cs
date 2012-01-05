@@ -7,5 +7,6 @@ namespace DeployToAzure.Management
         RequestUri BeginDelete(DeploymentSlotUri deploymentUri);
         RequestUri BeginCreate(DeploymentSlotUri deploymentUri, IDeploymentConfiguration configuration);
         AzureRequestStatus CheckRequestStatus(RequestUri requestUri);
+        RequestUri BeginUpgrade(DeploymentSlotUri deploymentSlotUri, DeploymentConfiguration configuration);
     }
 }

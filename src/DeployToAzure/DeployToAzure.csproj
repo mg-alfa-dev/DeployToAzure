@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Annotations.cs" />
+    <Compile Include="ConfigurationParser.cs" />
     <Compile Include="Management\AzureDeploymentCheckOutcome.cs" />
     <Compile Include="Management\AzureDeploymentSlot.cs" />
     <Compile Include="Management\AzureManagementApiWithRetries.cs" />

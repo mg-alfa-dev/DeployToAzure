@@ -1,3 +1,4 @@
+using System;
 using DeployToAzure.Management;
 using NUnit.Framework;
 using Rhino.Mocks;
@@ -168,6 +169,11 @@ namespace DeployToAzure.Tests.Management
                 WaitCompleted = false;
                 CurrentState = AzureDeploymentCheckOutcome.NotFound;
                 DeletedAtLeastOnce = true;
+            }
+
+            public void Upgrade(DeploymentSlotUri deploymentSlotUri, DeploymentConfiguration configuration)
+            {
+                throw new NotImplementedException();
             }
         }
     }
