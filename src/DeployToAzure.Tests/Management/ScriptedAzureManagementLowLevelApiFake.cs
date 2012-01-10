@@ -1,3 +1,4 @@
+using System;
 using DeployToAzure.Management;
 using DeployToAzure.Tests.TestUtilities;
 
@@ -58,6 +59,11 @@ namespace DeployToAzure.Tests.Management
             LastCheckRequestStatusRequestUri = requestUri;
             RunScript();
             return NextRequestStatus;
+        }
+
+        public RequestUri BeginUpgrade(DeploymentSlotUri deploymentSlotUri, DeploymentConfiguration configuration)
+        {
+            throw new NotImplementedException();
         }
     }
 }
