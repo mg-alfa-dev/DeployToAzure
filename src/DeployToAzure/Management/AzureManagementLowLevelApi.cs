@@ -56,8 +56,8 @@ namespace DeployToAzure.Management
                 case "Failed":
                     OurTrace.TraceError("CheckRequestStatus gave us a failure: " + response.Content);
                     var is400BadRequest = Regex.Match(response.Content, "<HttpStatusCode>400</HttpStatusCode><Error><Code>BadRequest</Code>");
-                    if(is400BadRequest.Success)
-                        FailFast.WithMessage("BadRequest returned for previous operation: " + response.Content);
+                    if (is400BadRequest.Success)
+                        throw new BadRequestException(requestUri, response.Content);
                     return AzureRequestStatus.Failed;
                 default:
                     FailFast.WithMessage("Unexpected operation status: " + match.Groups[1].Value + ", for operation: " + requestUri);

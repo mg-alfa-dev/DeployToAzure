@@ -63,6 +63,7 @@
     <Compile Include="Management\AzureDeploymentSlot.cs" />
     <Compile Include="Management\AzureManagementApiWithRetries.cs" />
     <Compile Include="Management\AzureManagementLowLevelApi.cs" />
+    <Compile Include="Management\BadRequestException.cs" />
     <Compile Include="Management\DeploymentConfiguration.cs" />
     <Compile Include="Management\DeploymentSlotUri.cs" />
     <Compile Include="Management\Http.cs" />

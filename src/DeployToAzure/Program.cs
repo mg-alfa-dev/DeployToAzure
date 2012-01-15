@@ -24,9 +24,14 @@ namespace DeployToAzure
             }
 
             var tryToUseUpgradeDeployment = false;
+            var fallbackToReplaceDeployment = false;
             if (args.Length > 1)
+            {
                 if (args.Contains("--try-to-use-upgrade-deployment"))
                     tryToUseUpgradeDeployment = true;
+                if (args.Contains("--fallback-to-replace-deployment"))
+                    fallbackToReplaceDeployment = true;
+            }
 
             var configuration = ConfigurationParser.ParseConfiguration(args[0]);
             var certificate = new X509Certificate2(configuration.CertFileName, configuration.CertPassword);
@@ -40,7 +45,21 @@ namespace DeployToAzure
             try
             {
                 if (tryToUseUpgradeDeployment && managementApiWithRetries.DoesDeploymentExist(configuration.DeploymentSlotUri))
-                    deploymentSlotManager.UpgradeDeployment(configuration);
+                {
+                    try
+                    {
+                        deploymentSlotManager.UpgradeDeployment(configuration);
+                    }
+                    catch(BadRequestException ex)
+                    {
+                        OurTrace.TraceError(string.Format("Upgrade failed with message: {0}\r\n, **** {1}", ex, fallbackToReplaceDeployment ? "falling back to replace." : "exiting."));
+                        // retry using CreateOrReplaceDeployment, since we might have tried to do something that isn't allowed with UpgradeDeployment.
+                        if (fallbackToReplaceDeployment)
+                            deploymentSlotManager.CreateOrReplaceDeployment(configuration);
+                        else
+                            throw;
+                    }
+                }
                 else
                     deploymentSlotManager.CreateOrReplaceDeployment(configuration);
 
