@@ -91,6 +91,8 @@ namespace DeployToAzure
             Console.WriteLine("    <DeploymentLabel>(deployment label)</DeploymentLabel>");
             Console.WriteLine("    <DeploymentName>(deployment name)</DeploymentName>");
             Console.WriteLine("    <RoleName>(role name)</RoleName>");
+            Console.WriteLine("    <MaxRetries>(number of times to retry any operation)</MaxRetries>");
+            Console.WriteLine("    <RetryIntervalInSeconds>(time to wait between retries of operations (in seconds))</RetryIntervalInSeconds>");
             Console.WriteLine("  </Params>");
         }
 
