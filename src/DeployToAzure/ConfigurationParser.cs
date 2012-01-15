@@ -25,6 +25,8 @@ namespace DeployToAzure
             string deploymentName = arguments.DeploymentName.Value;
             string roleName = arguments.RoleName.Value;
             string force = arguments.Force.Value ?? "false";
+            string maxRetries = arguments.MaxRetries.Value ?? "20";
+            string retryIntervalInSeconds = arguments.RetryIntervalInSeconds.Value ?? "15";
 
             OurTrace.TraceInfo("Using parameters:");
             OurTrace.TraceInfo(string.Format("subscriptionId: {0}", subscriptionId));
@@ -40,6 +42,9 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("deploymentName: {0}", deploymentName));
             OurTrace.TraceInfo(string.Format("roleName: {0}", roleName));
             OurTrace.TraceInfo(string.Format("force: {0}", force));
+            OurTrace.TraceInfo(string.Format("maxRetries: {0}", maxRetries));
+            OurTrace.TraceInfo(string.Format("retryIntervalInSeconds: {0}", retryIntervalInSeconds));
+
 
             var packageUrl = string.Format("https://{0}.blob.core.windows.net/deployment-package/{1}.cspkg", storageAccountName, Guid.NewGuid());
 
@@ -59,6 +64,8 @@ namespace DeployToAzure
                 CertPassword = certPassword,
                 RoleName = roleName,
                 Force = bool.Parse(force),
+                MaxRetries = int.Parse(maxRetries),
+                RetryIntervalInSeconds = int.Parse(retryIntervalInSeconds),
             };
         }
     }

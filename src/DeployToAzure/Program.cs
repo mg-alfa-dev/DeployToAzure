@@ -37,7 +37,7 @@ namespace DeployToAzure
             var certificate = new X509Certificate2(configuration.CertFileName, configuration.CertPassword);
             var http = new Http(certificate);
             var azureDeploymentDeploymentLowLevelApi = new AzureManagementLowLevelApi(http);
-            var managementApiWithRetries = new AzureManagementApiWithRetries(azureDeploymentDeploymentLowLevelApi, 20, TimeSpan.FromSeconds(15));
+            var managementApiWithRetries = new AzureManagementApiWithRetries(azureDeploymentDeploymentLowLevelApi, configuration.MaxRetries, TimeSpan.FromSeconds(configuration.RetryIntervalInSeconds));
 
             UploadBlob(configuration.PackageFileName, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
 

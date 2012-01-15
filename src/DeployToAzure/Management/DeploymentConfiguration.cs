@@ -23,6 +23,8 @@ namespace DeployToAzure.Management
         public string CertFileName;
         public string CertPassword;
         public DeploymentSlotUri DeploymentSlotUri;
+        public int MaxRetries;
+        public int RetryIntervalInSeconds;
 
         public string MakeCreateDeploymentMessage()
         {
