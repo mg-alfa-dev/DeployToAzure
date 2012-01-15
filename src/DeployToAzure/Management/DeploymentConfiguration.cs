@@ -1,5 +1,4 @@
 using System;
-using System.Security;
 using System.Text;
 
 namespace DeployToAzure.Management
@@ -9,14 +8,8 @@ namespace DeployToAzure.Management
         string MakeCreateDeploymentMessage();
     }
 
-    public enum UpgradeMode
-    {
-        Auto, Manual
-    }
-
     public class DeploymentConfiguration : IDeploymentConfiguration
     {
-        public UpgradeMode UpgradeMode;
         public string PackageUrl;
         public string DeploymentLabel;
         public string DeploymentName;
@@ -51,15 +44,15 @@ namespace DeployToAzure.Management
             const string format =
                 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <UpgradeDeployment xmlns=""http://schemas.microsoft.com/windowsazure"">
-    <Mode>{0}</Mode>
-    <PackageUrl>{1}</PackageUrl>
-    <Configuration>{2}</Configuration>
-    <Label>{3}</Label>
-    <Force>{4}</Force>
+    <Mode>Auto</Mode>
+    <PackageUrl>{0}</PackageUrl>
+    <Configuration>{1}</Configuration>
+    <Label>{2}</Label>
+    <Force>{3}</Force>
 </UpgradeDeployment>";
 
             var label = Convert.ToBase64String(Encoding.ASCII.GetBytes(DeploymentLabel));
-            return string.Format(format, UpgradeMode, PackageUrl, 
+            return string.Format(format, PackageUrl, 
                 Convert.ToBase64String(Encoding.ASCII.GetBytes(ServiceConfiguration)), 
                 label, Force.ToString().ToLower());
         }

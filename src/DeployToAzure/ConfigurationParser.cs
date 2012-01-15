@@ -5,7 +5,7 @@ using DeployToAzure.Utility;
 
 namespace DeployToAzure
 {
-    public class ConfigurationParser
+    public static class ConfigurationParser
     {
         public static DeploymentConfiguration ParseConfiguration(string filename)
         {
