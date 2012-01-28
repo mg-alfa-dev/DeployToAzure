@@ -40,6 +40,8 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
                 writer.WriteLine("    <DeploymentLabel>deployment label</DeploymentLabel>");
                 writer.WriteLine("    <DeploymentName>deployment name</DeploymentName>");
                 writer.WriteLine("    <RoleName>role name</RoleName>");
+                writer.WriteLine("    <MaxRetries>12</MaxRetries>");
+                writer.WriteLine("    <RetryIntervalInSeconds>12</RetryIntervalInSeconds>");
                 writer.WriteLine("    <Force>true</Force>");
                 writer.WriteLine("  </Params>");
             }
