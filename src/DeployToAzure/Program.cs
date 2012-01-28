@@ -25,12 +25,15 @@ namespace DeployToAzure
 
             var tryToUseUpgradeDeployment = false;
             var fallbackToReplaceDeployment = false;
+            var doNotRedeploy = false;
             if (args.Length > 1)
             {
                 if (args.Contains("--try-to-use-upgrade-deployment"))
                     tryToUseUpgradeDeployment = true;
                 if (args.Contains("--fallback-to-replace-deployment"))
                     fallbackToReplaceDeployment = true;
+                if (args.Contains("--delete"))
+                    doNotRedeploy = true;
             }
 
             var configuration = ConfigurationParser.ParseConfiguration(args[0]);
@@ -39,11 +42,18 @@ namespace DeployToAzure
             var azureDeploymentDeploymentLowLevelApi = new AzureManagementLowLevelApi(http);
             var managementApiWithRetries = new AzureManagementApiWithRetries(azureDeploymentDeploymentLowLevelApi, configuration.MaxRetries, TimeSpan.FromSeconds(configuration.RetryIntervalInSeconds));
 
-            UploadBlob(configuration.PackageFileName, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
-
-            var deploymentSlotManager = new AzureDeploymentSlot(managementApiWithRetries, configuration.DeploymentSlotUri);
             try
             {
+                var deploymentSlotManager = new AzureDeploymentSlot(managementApiWithRetries, configuration.DeploymentSlotUri);
+                if (doNotRedeploy)
+                {
+                    deploymentSlotManager.DeleteDeployment();
+                    return 0;
+                }
+
+                UploadBlob(configuration.PackageFileName, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
+                
+
                 if (tryToUseUpgradeDeployment && managementApiWithRetries.DoesDeploymentExist(configuration.DeploymentSlotUri))
                 {
                     try
@@ -61,7 +71,9 @@ namespace DeployToAzure
                     }
                 }
                 else
+                {
                     deploymentSlotManager.CreateOrReplaceDeployment(configuration);
+                }
 
                 DeleteBlob(configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
             }
@@ -76,7 +88,8 @@ namespace DeployToAzure
        
         private static void Usage()
         {
-            Console.WriteLine("Usage: DeployToAzure <parameters file name>");
+            Console.WriteLine("Usage: DeployToAzure <parameters file name> [--delete] [--try-to-use-upgrade-deployment] [--fallback-to-replace-deployment]");
+            Console.WriteLine("  Delete parameter will cause deployment to be deleted and not redeployed");
             Console.WriteLine("  Parameters file is a XML file with the following contents:");
             Console.WriteLine("  <Params>");
             Console.WriteLine("    <SubscriptionId>(your azure subscription id)</SubscriptionId>");
