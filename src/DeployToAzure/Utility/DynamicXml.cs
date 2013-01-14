@@ -28,11 +28,11 @@ namespace DeployToAzure.Utility
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = null;
+            result = new DynamicXml(new XElement[0]);
             switch (binder.Name)
             {
                 case "Value":
-                    result = _elements[0].Value;
+                    result = _elements.Count > 0 ? _elements[0].Value : null;
                     break;
                 case "Count":
                     result = _elements.Count;
@@ -49,7 +49,7 @@ namespace DeployToAzure.Utility
                                 return true;
                             var itemsArray = items.ToArray();
                             if (itemsArray.Length == 0)
-                                return false;
+                                return true;
                             result = new DynamicXml(itemsArray);
                         }
                     }

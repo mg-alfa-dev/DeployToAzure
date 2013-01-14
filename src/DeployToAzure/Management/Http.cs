@@ -157,5 +157,10 @@ namespace DeployToAzure.Management
         {
             return statusCode == HttpStatusCode.Conflict;
         }
+
+        public static bool IsOK(this HttpStatusCode statusCode)
+        {
+            return statusCode == HttpStatusCode.OK;
+        }
     }
 }

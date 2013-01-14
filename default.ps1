@@ -18,7 +18,7 @@ properties {
   $unitTestReport = "$unitTestReportPath\UnitTestReport.xml"
   $solution = "DeployToAzure.sln"
   $packageZip = "$buildDir\DeployToAzure.zip"
-  $packageFiles = @("$buildDir\DeployToAzure.exe")
+  $packageFiles = @("$buildDir\DeployToAzure.exe", "$buildDir\DeployToAzure.ps1")
 }
 
 task default -depends Compile, Unit-Test, Publish

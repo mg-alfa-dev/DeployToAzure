@@ -58,5 +58,7 @@ namespace DeployToAzure.Management
         {
             return !Equals(left, right);
         }
+
+        public string SubscriptionId { get { return _subscriptionId; } }
     }
 }

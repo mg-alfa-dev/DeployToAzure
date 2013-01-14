@@ -51,8 +51,40 @@ namespace DeployToAzure
                     return 0;
                 }
 
+                var subscriptionId = configuration.DeploymentSlotUri.SubscriptionId;
+                if (configuration.StorageAccountKey == null || configuration.StorageAccountName == null)
+                {
+                    OurTrace.TraceInfo("Attempting to guess account name and key based on certificate.");
+                    
+                    if (string.IsNullOrWhiteSpace(configuration.StorageAccountName))
+                    {
+                        OurTrace.TraceInfo("Looking up storage accounts for the subscription.");
+                        var storageAccounts = azureDeploymentDeploymentLowLevelApi.ListStorageAccounts(subscriptionId);
+                        configuration.StorageAccountName = storageAccounts.FirstOrDefault();
+
+                        if (string.IsNullOrWhiteSpace(configuration.StorageAccountName))
+                        {
+                            OurTrace.TraceError("Couldn't find any suitable storage accounts.");
+                            throw new InvalidOperationException("No suitable storage accounts.");
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(configuration.StorageAccountKey))
+                    {
+                        OurTrace.TraceInfo(string.Format("Looking up storage keys for account: {0}", configuration.StorageAccountName));
+                        var storageKeys = azureDeploymentDeploymentLowLevelApi.GetStorageAccountKeys(subscriptionId, configuration.StorageAccountName);
+
+                        configuration.StorageAccountKey = storageKeys.FirstOrDefault();
+
+                        if (string.IsNullOrWhiteSpace(configuration.StorageAccountKey))
+                        {
+                            OurTrace.TraceError(string.Format("Couldn't find any keys for storage account: {0}", configuration.StorageAccountName));
+                            throw new InvalidOperationException("No suitable storage account keys.");
+                        }
+                    }
+                }
+
                 UploadBlob(configuration.PackageFileName, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
-                
 
                 if (tryToUseUpgradeDeployment && managementApiWithRetries.DoesDeploymentExist(configuration.DeploymentSlotUri))
                 {

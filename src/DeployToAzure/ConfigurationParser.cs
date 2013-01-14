@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using DeployToAzure.Management;
 using DeployToAzure.Utility;
@@ -45,9 +44,6 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("maxRetries: {0}", maxRetries));
             OurTrace.TraceInfo(string.Format("retryIntervalInSeconds: {0}", retryIntervalInSeconds));
 
-
-            var packageUrl = string.Format("https://{0}.blob.core.windows.net/deployment-package/{1}.cspkg", storageAccountName, Guid.NewGuid());
-
             var serviceConfigurationString = File.ReadAllText(serviceConfigurationPath);
 
             return new DeploymentConfiguration
@@ -55,7 +51,6 @@ namespace DeployToAzure
                 DeploymentLabel = deploymentLabel,
                 DeploymentName = deploymentName,
                 DeploymentSlotUri = new DeploymentSlotUri(subscriptionId, serviceName, deploymentSlot),
-                PackageUrl = packageUrl,
                 ServiceConfiguration = serviceConfigurationString,
                 PackageFileName = packageFileName,
                 StorageAccountName = storageAccountName,

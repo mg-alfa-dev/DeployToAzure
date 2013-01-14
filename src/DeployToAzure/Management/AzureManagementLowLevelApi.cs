@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using DeployToAzure.Utility;
+using JetBrains.Annotations;
 
 namespace DeployToAzure.Management
 {
@@ -127,6 +131,44 @@ namespace DeployToAzure.Management
             return null; // can't be reached.
         }
 
+        public IEnumerable<string> ListStorageAccounts(string subscriptionId)
+        {
+            var uri = string.Format("https://management.core.windows.net/{0}/services/storageservices", subscriptionId);
+            var response = _http.Get(uri);
+            if(!response.StatusCode.IsOK())
+                ThrowUnexpectedHttpResponse(response);
+
+            XNamespace ns = "http://schemas.microsoft.com/windowsazure";
+            var elName = ns + "ServiceName";
+            var result = XDocument.Parse(response.Content);
+            
+            if(result.Root == null)
+                ThrowUnexpectedHttpResponse(response);
+
+            var services = result.Root.Descendants(elName);
+            return services.Select(x => x.Value).ToArray();
+        }
+
+        public IEnumerable<string> GetStorageAccountKeys(string subscriptionId, string storageAccountName)
+        {
+            var uri = string.Format("https://management.core.windows.net/{0}/services/storageservices/{1}/keys",
+                subscriptionId,
+                storageAccountName);
+            var response = _http.Get(uri);
+            if(!response.StatusCode.IsOK())
+                ThrowUnexpectedHttpResponse(response);
+
+            XNamespace ns = "http://schemas.microsoft.com/windowsazure";
+            var elName = ns + "StorageServiceKeys";
+            var result = XDocument.Parse(response.Content);
+
+            if(result.Root == null)
+                ThrowUnexpectedHttpResponse(response);
+
+            var keysParent = result.Root.Descendants(elName).First();
+            return keysParent.Elements().Select(x => x.Value).ToArray();
+        }
+
         private RequestUri ChangeStatus(DeploymentSlotUri deploymentUri, string newStatus)
         {
             OurTrace.TraceVerbose("Changing status to:" + newStatus);
@@ -149,6 +191,7 @@ namespace DeployToAzure.Management
             return null; // can't be reached.
         }
         
+        [TerminatesProgram]
         private static void ThrowUnexpectedHttpResponse(HttpResponse response)
         {
             OurTrace.TraceVerbose("Throwing UnhandledHttpException: " + response.StatusCode + ", with content: " + response.Content);

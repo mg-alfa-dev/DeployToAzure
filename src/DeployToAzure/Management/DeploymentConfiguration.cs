@@ -10,7 +10,18 @@ namespace DeployToAzure.Management
 
     public class DeploymentConfiguration : IDeploymentConfiguration
     {
-        public string PackageUrl;
+        private readonly Guid _PackageGuid = Guid.NewGuid();
+
+        public string PackageUrl
+        {
+            get
+            {
+                return string.Format("https://{0}.blob.core.windows.net/deployment-package/{1}.cspkg",
+                    StorageAccountName,
+                    _PackageGuid);
+            }
+        }
+
         public string DeploymentLabel;
         public string DeploymentName;
         public string RoleName;
