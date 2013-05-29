@@ -37,6 +37,7 @@ namespace DeployToAzure.Management
         public int MaxRetries;
         public int RetryIntervalInSeconds;
         public string BlobPathToDeploy;
+        public string ChangeVMSize;
 
         public string MakeCreateDeploymentMessage()
         {

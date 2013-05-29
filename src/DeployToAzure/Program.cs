@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DeployToAzure.Management;
 using DeployToAzure.Utility;
@@ -93,7 +94,15 @@ namespace DeployToAzure
                     }
                 }
 
-                UploadBlob(configuration.PackageFileName, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
+                var csPkg = configuration.PackageFileName;
+                if (!string.IsNullOrWhiteSpace(configuration.ChangeVMSize))
+                {
+                    csPkg = Path.GetTempFileName();
+                    File.Copy(configuration.PackageFileName, csPkg, true);
+                    ChangeVMSize(csPkg, configuration.ChangeVMSize);
+                }
+
+                UploadBlob(csPkg, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
                 if(!string.IsNullOrWhiteSpace(configuration.BlobPathToDeploy))
                     DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
 
@@ -128,6 +137,23 @@ namespace DeployToAzure
             return 0;
         }
 
+        private static void ChangeVMSize(string tempPackageFilePath, string newVMSize)
+        {
+            if (!ValidateVMSize(newVMSize))
+            {
+                OurTrace.TraceError(string.Format("Invalid vmsize: {0} - should be (ExtraSmall|Small|Medium|Large|ExtraLarge|A6|A7)"));
+                Environment.Exit(-2);
+            }
+
+            VMSizeChanger.ChangeVMSize(tempPackageFilePath, newVMSize);
+        }
+
+        private static bool ValidateVMSize(string newVMSize)
+        {
+            const string pattern = @"^(ExtraSmall|Small|Medium|Large|ExtraLarge|A6|A7)$";
+            return Regex.IsMatch(newVMSize, pattern);
+        }
+
         private static void Usage()
         {
             Console.WriteLine("Usage: DeployToAzure <parameters file name> [--delete] [--try-to-use-upgrade-deployment] [--fallback-to-replace-deployment]");
@@ -149,6 +175,7 @@ namespace DeployToAzure
             Console.WriteLine("    <MaxRetries>(number of times to retry any operation)</MaxRetries>");
             Console.WriteLine("    <RetryIntervalInSeconds>(time to wait between retries of operations (in seconds))</RetryIntervalInSeconds>");
             Console.WriteLine("    <BlobPathToDeploy>(path to blobs that also need deployment (optional))</BlobPathToDeploy>");
+            Console.WriteLine("    <ChangeVMSize>(vm size to change to (optional))</ChangeVMSize>");
             Console.WriteLine("  </Params>");
         }
 

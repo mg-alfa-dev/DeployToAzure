@@ -16,7 +16,8 @@ function Create-DeployParams
     [IO.FileInfo] $CertFile = $(throw "Parameter -CertFile [IO.FileInfo] is required."),
     [string] $CertPassword = $(throw "Parameter -CertPassword [string] is required."),
     [IO.FileInfo] $OutFile = $(throw "Parameter -OutFile [IO.FileInfo] is required."),
-    [IO.FileInfo] $BlobPathToDeploy = $null
+    [IO.FileInfo] $BlobPathToDeploy = $null,
+    [string] $ChangeVMSize = $null
   )
   
   $params = @{
@@ -44,6 +45,10 @@ function Create-DeployParams
 
   if($BlobPathToDeploy -ne $null) {
     $params.BlobPathToDeploy = $BlobPathToDeploy.FullName
+  }
+
+  if($ChangeVMSize -ne $null) {
+    $params.ChangeVMSize = $ChangeVMSize
   }
   
   $xml = "<Params>"

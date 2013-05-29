@@ -27,6 +27,7 @@ namespace DeployToAzure
             string maxRetries = arguments.MaxRetries.Value ?? "20";
             string retryIntervalInSeconds = arguments.RetryIntervalInSeconds.Value ?? "15";
             string blobPathToDeploy = arguments.BlobPathToDeploy.Value;
+            string changeVMSize = arguments.ChangeVMSize.Value;
 
             OurTrace.TraceInfo("Using parameters:");
             OurTrace.TraceInfo(string.Format("subscriptionId: {0}", subscriptionId));
@@ -45,6 +46,7 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("maxRetries: {0}", maxRetries));
             OurTrace.TraceInfo(string.Format("retryIntervalInSeconds: {0}", retryIntervalInSeconds));
             OurTrace.TraceInfo(string.Format("blobPathToDeploy: {0}", blobPathToDeploy));
+            OurTrace.TraceInfo(string.Format("changeVMSize: {0}", changeVMSize));
 
             var serviceConfigurationString = File.ReadAllText(serviceConfigurationPath);
 
@@ -64,6 +66,7 @@ namespace DeployToAzure
                 MaxRetries = int.Parse(maxRetries),
                 RetryIntervalInSeconds = int.Parse(retryIntervalInSeconds),
                 BlobPathToDeploy = blobPathToDeploy,
+                ChangeVMSize = changeVMSize,
             };
         }
     }
