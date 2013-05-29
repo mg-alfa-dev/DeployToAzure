@@ -36,6 +36,7 @@ namespace DeployToAzure.Management
         public DeploymentSlotUri DeploymentSlotUri;
         public int MaxRetries;
         public int RetryIntervalInSeconds;
+        public string BlobPathToDeploy;
 
         public string MakeCreateDeploymentMessage()
         {

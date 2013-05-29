@@ -26,6 +26,7 @@ namespace DeployToAzure
             string force = arguments.Force.Value ?? "false";
             string maxRetries = arguments.MaxRetries.Value ?? "20";
             string retryIntervalInSeconds = arguments.RetryIntervalInSeconds.Value ?? "15";
+            string blobPathToDeploy = arguments.BlobPathToDeploy.Value;
 
             OurTrace.TraceInfo("Using parameters:");
             OurTrace.TraceInfo(string.Format("subscriptionId: {0}", subscriptionId));
@@ -43,6 +44,7 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("force: {0}", force));
             OurTrace.TraceInfo(string.Format("maxRetries: {0}", maxRetries));
             OurTrace.TraceInfo(string.Format("retryIntervalInSeconds: {0}", retryIntervalInSeconds));
+            OurTrace.TraceInfo(string.Format("blobPathToDeploy: {0}", blobPathToDeploy));
 
             var serviceConfigurationString = File.ReadAllText(serviceConfigurationPath);
 
@@ -61,6 +63,7 @@ namespace DeployToAzure
                 Force = bool.Parse(force),
                 MaxRetries = int.Parse(maxRetries),
                 RetryIntervalInSeconds = int.Parse(retryIntervalInSeconds),
+                BlobPathToDeploy = blobPathToDeploy,
             };
         }
     }

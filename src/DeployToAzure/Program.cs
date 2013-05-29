@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using DeployToAzure.Management;
 using DeployToAzure.Utility;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
-using System.Security.Cryptography.X509Certificates;
 
 namespace DeployToAzure
 {
@@ -67,6 +69,13 @@ namespace DeployToAzure
                             OurTrace.TraceError("Couldn't find any suitable storage accounts.");
                             throw new InvalidOperationException("No suitable storage accounts.");
                         }
+
+                        if (!string.IsNullOrWhiteSpace(configuration.BlobPathToDeploy))
+                        {
+                            // don't allow BlobPathToDeploy if we're guessing the storage account.
+                            OurTrace.TraceInfo("Ignoring BlobPathToDeploy because we're guessing the storage account.");
+                            configuration.BlobPathToDeploy = null;
+                        }
                     }
 
                     if (string.IsNullOrWhiteSpace(configuration.StorageAccountKey))
@@ -85,6 +94,8 @@ namespace DeployToAzure
                 }
 
                 UploadBlob(configuration.PackageFileName, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
+                if(!string.IsNullOrWhiteSpace(configuration.BlobPathToDeploy))
+                    DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
 
                 if (tryToUseUpgradeDeployment && managementApiWithRetries.DoesDeploymentExist(configuration.DeploymentSlotUri))
                 {
@@ -117,7 +128,6 @@ namespace DeployToAzure
             return 0;
         }
 
-       
         private static void Usage()
         {
             Console.WriteLine("Usage: DeployToAzure <parameters file name> [--delete] [--try-to-use-upgrade-deployment] [--fallback-to-replace-deployment]");
@@ -138,6 +148,7 @@ namespace DeployToAzure
             Console.WriteLine("    <RoleName>(role name)</RoleName>");
             Console.WriteLine("    <MaxRetries>(number of times to retry any operation)</MaxRetries>");
             Console.WriteLine("    <RetryIntervalInSeconds>(time to wait between retries of operations (in seconds))</RetryIntervalInSeconds>");
+            Console.WriteLine("    <BlobPathToDeploy>(path to blobs that also need deployment (optional))</BlobPathToDeploy>");
             Console.WriteLine("  </Params>");
         }
 
@@ -146,11 +157,9 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("Deleting blob {0}", packageUrl));
 
             var packageUri = new Uri(packageUrl);
-            var baseAddress = packageUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
             var credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
 
-            var cloudBlobClient = new CloudBlobClient(baseAddress, credentials);
-            var blobRef = cloudBlobClient.GetBlockBlobReference(packageUrl);
+            var blobRef = new CloudBlockBlob(packageUri.AbsoluteUri, credentials);
             blobRef.DeleteIfExists();
         }
 
@@ -159,30 +168,49 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("Uploading blob from {0} to {1}", packageFileName, packageUrl));
 
             var packageUri = new Uri(packageUrl);
-            var baseAddress = packageUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
             var credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
+            var blobRef = new CloudBlockBlob(packageUri.AbsoluteUri, credentials);
 
-            RetryPolicy myRetryPolicy = () =>
-            {
-                var shouldRetryInner = RetryPolicies.Retry(10, TimeSpan.Zero)();
-                return (int rc, Exception ex, out TimeSpan d) =>
-                {
-                    var result = shouldRetryInner(rc, ex, out d);
-                    if (result)
-                        OurTrace.TraceWarning(string.Format("Retrying per retry policy (retry {0}, delay {1}) for exception:\n{2}", rc, ex, d));
-                    return result;
-                };
-            };
-
-            var cloudBlobClient = new CloudBlobClient(baseAddress, credentials)
-            {
-                RetryPolicy = myRetryPolicy,
-                Timeout = TimeSpan.FromMinutes(15),
-            };
-
-            var blobRef = cloudBlobClient.GetBlockBlobReference(packageUrl);
+            blobRef.ServiceClient.Timeout = TimeSpan.FromMinutes(15);
             blobRef.Container.CreateIfNotExist();
             blobRef.UploadFile(packageFileName);
+        }
+
+        private static void DeployBlobs(string blobPathToDeploy, string storageAccountName, string storageAccountKey)
+        {
+            OurTrace.TraceInfo(string.Format("Deploying blobs from {0} to {1}", blobPathToDeploy, storageAccountName));
+
+            var credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
+            var storageAccount = new CloudStorageAccount(credentials, true);
+            var client = storageAccount.CreateCloudBlobClient();
+            client.Timeout = TimeSpan.FromMinutes(15);
+
+            var folders = Directory.GetDirectories(blobPathToDeploy);
+            Parallel.ForEach(
+                folders.Select(Path.GetFileName),
+                new ParallelOptions { MaxDegreeOfParallelism = 6 },
+                folder =>
+                {
+                    client.GetContainerReference(folder).CreateIfNotExist();
+                    OurTrace.TraceInfo(string.Format("Created container: {0}", folder));
+                });
+
+            var files = from folder in folders
+                        from file in Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories)
+                        let result = Tuple.Create(Path.GetFileName(folder), file.Remove(0, folder.Length + 1), file)
+                        select result;
+
+            Parallel.ForEach(
+                files,
+                new ParallelOptions { MaxDegreeOfParallelism = 6 },
+                f =>
+                {
+                    var container = client.GetContainerReference(f.Item1);
+                    var blob = container.GetBlockBlobReference(f.Item2);
+
+                    blob.UploadFile(f.Item3);
+                    OurTrace.TraceInfo(string.Format("Uploaded Blob: {0} => {1}:{2}", f.Item3, f.Item1, f.Item2));
+                });
         }
     }
 }

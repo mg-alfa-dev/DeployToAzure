@@ -15,7 +15,8 @@ function Create-DeployParams
     [string] $Name = "Deployment",
     [IO.FileInfo] $CertFile = $(throw "Parameter -CertFile [IO.FileInfo] is required."),
     [string] $CertPassword = $(throw "Parameter -CertPassword [string] is required."),
-    [IO.FileInfo] $OutFile = $(throw "Parameter -OutFile [IO.FileInfo] is required.")
+    [IO.FileInfo] $OutFile = $(throw "Parameter -OutFile [IO.FileInfo] is required."),
+    [IO.FileInfo] $BlobPathToDeploy = $null
   )
   
   $params = @{
@@ -39,6 +40,10 @@ function Create-DeployParams
   
   if($Name.Contains(' ')) {
     throw "Deployment names cannot contain ' '"
+  }
+
+  if($BlobPathToDeploy -ne $null) {
+    $params.BlobPathToDeploy = $BlobPathToDeploy.FullName
   }
   
   $xml = "<Params>"
