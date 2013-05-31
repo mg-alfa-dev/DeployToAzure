@@ -70,3 +70,39 @@ function Execute-Deployment
     & $pathToDeployToAzureExe $ParamsFile
   }
 }
+
+function Update-ServiceConfiguration
+{
+  param
+  (
+    [IO.FileInfo] $ConfigFile = $(throw "Parameter -ConfigFile [IO.FileInfo] is required."),
+    [hashtable] $RewriteRules = $(throw "Parameter -RewriteRules [hashtable] is required.")
+  )
+  
+  $filePath = resolve-path $ConfigFile
+  
+  Write-Host "  Rewriting '$($filePath)':"
+  
+  $xml = [xml](gc $filePath)
+
+  foreach($ruleKey in $RewriteRules.Keys) {
+    Write-Host "    Rule: [$($ruleKey)] -> [$($RewriteRules[$ruleKey])]"
+    if(!$ruleKey.Contains('.')) { 
+      throw "RuleKey ($($ruleKey)) should be in <role>.<property> form." 
+    }
+    
+    $roleName = $ruleKey.Split('.')[0]
+    $roleProperty = $ruleKey.Split('.')[1]
+    
+    try {
+      $roles = $xml.ServiceConfiguration.Role
+      $role = $roles | ?{ $_.name -eq $roleName }
+      $configSetting = $role.ConfigurationSettings.Setting | ?{ $_.name -eq $roleProperty }
+      $configSetting.value = $RewriteRules[$ruleKey]
+    }
+    catch {
+      throw "Configuration file couldn't be patched.  Check the syntax of the file and/or for missing configuration setting entries."
+    }
+  }
+  $xml.Save($filePath)
+}
