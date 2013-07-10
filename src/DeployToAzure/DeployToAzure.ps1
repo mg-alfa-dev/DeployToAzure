@@ -66,9 +66,7 @@ function Execute-Deployment
   )
   
   Write-Host "  Using DeployToAzure from: $($pathToDeployToAzureExe)"
-  exec {
-    & $pathToDeployToAzureExe $ParamsFile
-  }
+  & $pathToDeployToAzureExe $ParamsFile
 }
 
 function Update-ServiceConfiguration
@@ -87,22 +85,71 @@ function Update-ServiceConfiguration
 
   foreach($ruleKey in $RewriteRules.Keys) {
     Write-Host "    Rule: [$($ruleKey)] -> [$($RewriteRules[$ruleKey])]"
-    if(!$ruleKey.Contains('.')) { 
-      throw "RuleKey ($($ruleKey)) should be in <role>.<property> form." 
-    }
     
-    $roleName = $ruleKey.Split('.')[0]
-    $roleProperty = $ruleKey.Split('.')[1]
+    $ruleValue = $RewriteRules[$ruleKey]
+    $keyParts = $ruleKey.Split(@([char]':'), 3)
+    if($keyParts.Length -ne 3 -and $keyParts.Length -ne 2 ) { 
+      throw "RuleKey ($($ruleKey)) should be in <role>:<section>:<property> form. (section is 'Config' or 'Cert'). Or <role>:Instances form" 
+    }
+    $roleName = $keyParts[0]
+    $section = $keyParts[1]
     
     try {
       $roles = $xml.ServiceConfiguration.Role
       $role = $roles | ?{ $_.name -eq $roleName }
-      $configSetting = $role.ConfigurationSettings.Setting | ?{ $_.name -eq $roleProperty }
-      $configSetting.value = $RewriteRules[$ruleKey]
+      if($role -eq $null) {
+        throw "Role $roleName not found in config."
+      }
+
+      switch($section) {
+        "Cert" { 
+          $target = $keyParts[2]
+          $configSetting = $role.Certificates.Certificate | ?{ $_.name -eq $target }
+          if($configSetting -eq $null) {
+            throw "Certificate $target not found in role $roleName"
+          }
+          $configSetting.SetAttribute("thumbprint", $ruleValue)
+        }
+        "Config" {
+          $target = $keyParts[2]
+          $configSetting = $role.ConfigurationSettings.Setting | ?{ $_.name -eq $target }
+          if($configSetting -eq $null) {
+            throw "Configuration setting $target not found in role $roleName"
+          }
+          $configSetting.value = $ruleValue
+        }
+        "Instances" {
+          $configSetting = $role.Instances
+          if($configSetting -eq $null) {
+            throw "Configuration setting $target not found in role $roleName"
+          }
+          $configSetting.count = $ruleValue
+        }
+        default {
+          throw "Rule contains an unrecognized section prefix: $($section): $(ruleKey)"
+        }
+      }
     }
     catch {
       throw "Configuration file couldn't be patched.  Check the syntax of the file and/or for missing configuration setting entries."
     }
   }
   $xml.Save($filePath)
+}
+
+function Get-RdpPassword($certificateFileName, $privateKeyPassword, $servicePassword) {
+  Add-Type -AssemblyName System.Security
+  $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certificateFileName, $privateKeyPassword)
+  $servicePasswordBytes = [Text.Encoding]::UTF8.GetBytes($servicePassword)
+  $content = New-Object System.Security.Cryptography.Pkcs.ContentInfo(,$servicePasswordBytes)
+  $envelope = New-Object System.Security.Cryptography.Pkcs.EnvelopedCms($content)
+  $recipient = New-Object System.Security.Cryptography.Pkcs.CmsRecipient($certificate)
+  $envelope.Encrypt($recipient)
+  [Convert]::ToBase64String($envelope.Encode())
+}
+
+function Get-Thumbprint($certificateFileName, $privateKeyPassword) {
+  Add-Type -AssemblyName System.Security
+  $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certificateFileName, $privateKeyPassword)
+  $certificate.Thumbprint
 }
