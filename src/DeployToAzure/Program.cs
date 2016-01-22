@@ -1,19 +1,70 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DeployToAzure.Management;
 using DeployToAzure.Utility;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.StorageClient;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace DeployToAzure
 {
     static class Program
     {
+        static readonly HashSet<string> ValidVmSizeValues = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                "ExtraSmall",
+                "Small",
+                "Medium",
+                "Large",
+                "ExtraLarge",
+                "Standard_A5",
+                "Standard_A6",
+                "Standard_A7",
+                "Standard_A8",
+                "Standard_A9",
+                "Standard_A10",
+                "Standard_A11",
+                "Standard_D1",
+                "Standard_D2",
+                "Standard_D3",
+                "Standard_D4",
+                "Standard_D11",
+                "Standard_D12",
+                "Standard_D13",
+                "Standard_D14",
+                "Standard_D1_v2",
+                "Standard_D2_v2",
+                "Standard_D3_v2",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D11_v2",
+                "Standard_D12_v2",
+                "Standard_D13_v2",
+                "Standard_D14_v2",
+                "Standard_DS1",
+                "Standard_DS2",
+                "Standard_DS3",
+                "Standard_DS4",
+                "Standard_DS11",
+                "Standard_DS12",
+                "Standard_DS13",
+                "Standard_DS14",
+                "Standard_G1",
+                "Standard_G2",
+                "Standard_G3",
+                "Standard_G4",
+                "Standard_G5",
+                "Standard_GS1",
+                "Standard_GS2",
+                "Standard_GS3",
+                "Standard_GS4",
+                "Standard_GS5",
+            };
         static int Main(string[] args)
         {
             var consoleTraceListener = new OurConsoleTraceListener();
@@ -99,7 +150,7 @@ namespace DeployToAzure
                 {
                     csPkg = Path.GetTempFileName();
                     File.Copy(configuration.PackageFileName, csPkg, true);
-                    ChangeVMSize(csPkg, configuration.ChangeVMSize);
+                    ChangeVmSize(csPkg, configuration.ChangeVMSize);
                 }
 
                 UploadBlob(csPkg, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
@@ -137,21 +188,21 @@ namespace DeployToAzure
             return 0;
         }
 
-        private static void ChangeVMSize(string tempPackageFilePath, string newVMSize)
+        private static void ChangeVmSize(string tempPackageFilePath, string newVmSize)
         {
-            if (!ValidateVMSize(newVMSize))
+            if (!ValidateVmSize(newVmSize))
             {
-                OurTrace.TraceError(string.Format("Invalid vmsize: {0} - should be (ExtraSmall|Small|Medium|Large|ExtraLarge|A6|A7)"));
+                OurTrace.TraceError(string.Format("Invalid vmsize: {0} - should be ({1})", newVmSize,
+                    string.Join(" | ", ValidVmSizeValues)));
                 Environment.Exit(-2);
             }
 
-            VMSizeChanger.ChangeVMSize(tempPackageFilePath, newVMSize);
+            VMSizeChanger.ChangeVMSize(tempPackageFilePath, newVmSize);
         }
 
-        private static bool ValidateVMSize(string newVMSize)
+        private static bool ValidateVmSize(string newVmSize)
         {
-            const string pattern = @"^(ExtraSmall|Small|Medium|Large|ExtraLarge|A6|A7)$";
-            return Regex.IsMatch(newVMSize, pattern);
+            return ValidVmSizeValues.Contains(newVmSize);
         }
 
         private static void Usage()
@@ -175,7 +226,7 @@ namespace DeployToAzure
             Console.WriteLine("    <MaxRetries>(number of times to retry any operation)</MaxRetries>");
             Console.WriteLine("    <RetryIntervalInSeconds>(time to wait between retries of operations (in seconds))</RetryIntervalInSeconds>");
             Console.WriteLine("    <BlobPathToDeploy>(path to blobs that also need deployment (optional))</BlobPathToDeploy>");
-            Console.WriteLine("    <ChangeVMSize>(vm size to change to (optional))</ChangeVMSize>");
+            Console.WriteLine("    <ChangeVmSize>(vm size to change to (optional))</ChangeVmSize>");
             Console.WriteLine("  </Params>");
         }
 
@@ -184,9 +235,9 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("Deleting blob {0}", packageUrl));
 
             var packageUri = new Uri(packageUrl);
-            var credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
+            var credentials = new StorageCredentials(storageAccountName, storageAccountKey);
 
-            var blobRef = new CloudBlockBlob(packageUri.AbsoluteUri, credentials);
+            var blobRef = new CloudBlockBlob(packageUri, credentials);
             blobRef.DeleteIfExists();
         }
 
@@ -195,30 +246,32 @@ namespace DeployToAzure
             OurTrace.TraceInfo(string.Format("Uploading blob from {0} to {1}", packageFileName, packageUrl));
 
             var packageUri = new Uri(packageUrl);
-            var credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
-            var blobRef = new CloudBlockBlob(packageUri.AbsoluteUri, credentials);
+            var credentials = new StorageCredentials(storageAccountName, storageAccountKey);
+            var blobRef = new CloudBlockBlob(packageUri, credentials);
 
-            blobRef.ServiceClient.Timeout = TimeSpan.FromMinutes(15);
-            blobRef.Container.CreateIfNotExist();
-            blobRef.UploadFile(packageFileName);
+            blobRef.ServiceClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromMinutes(15);
+            blobRef.ServiceClient.DefaultRequestOptions.MaximumExecutionTime = blobRef.ServiceClient.DefaultRequestOptions.ServerTimeout;
+            blobRef.Container.CreateIfNotExists();
+
+            blobRef.UploadFromFile(packageFileName, FileMode.Open);
         }
 
         private static void DeployBlobs(string blobPathToDeploy, string storageAccountName, string storageAccountKey)
         {
             OurTrace.TraceInfo(string.Format("Deploying blobs from {0} to {1}", blobPathToDeploy, storageAccountName));
 
-            var credentials = new StorageCredentialsAccountAndKey(storageAccountName, storageAccountKey);
+            var credentials = new StorageCredentials(storageAccountName, storageAccountKey);
             var storageAccount = new CloudStorageAccount(credentials, true);
             var client = storageAccount.CreateCloudBlobClient();
-            client.Timeout = TimeSpan.FromMinutes(15);
-
+            client.DefaultRequestOptions.ServerTimeout = TimeSpan.FromMinutes(15);
+            client.DefaultRequestOptions.MaximumExecutionTime = client.DefaultRequestOptions.ServerTimeout; 
             var folders = Directory.GetDirectories(blobPathToDeploy);
             Parallel.ForEach(
                 folders.Select(Path.GetFileName),
                 new ParallelOptions { MaxDegreeOfParallelism = 6 },
                 folder =>
                 {
-                    client.GetContainerReference(folder).CreateIfNotExist();
+                    client.GetContainerReference(folder).CreateIfNotExists();
                     OurTrace.TraceInfo(string.Format("Created container: {0}", folder));
                 });
 
@@ -235,7 +288,7 @@ namespace DeployToAzure
                     var container = client.GetContainerReference(f.Item1);
                     var blob = container.GetBlockBlobReference(f.Item2);
 
-                    blob.UploadFile(f.Item3);
+                    blob.UploadFromFile(f.Item3, FileMode.Open);
                     OurTrace.TraceInfo(string.Format("Uploaded Blob: {0} => {1}:{2}", f.Item3, f.Item1, f.Item2));
                 });
         }
