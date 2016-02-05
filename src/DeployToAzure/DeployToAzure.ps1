@@ -153,3 +153,47 @@ function Get-Thumbprint($certificateFileName, $privateKeyPassword) {
   $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certificateFileName, $privateKeyPassword)
   $certificate.Thumbprint
 }
+
+function Update-DiagnosticsConfiguration{
+  param 
+  (
+    [string] $SubscriptionId = $(throw "Parameter -SubscriptionId [string] is required."),
+    [string] $ServiceName = $(throw "Parameter -ServiceName [string] is required."),
+    [string] $Slot = "production",
+    [string] $Configuration = $(throw "Parameter -Configuration [string] is required."),
+    [string] $StorageAccountName = $(throw "Parameter -StorageAccountName [string] is required."),
+    [string] $StorageAccountKey = $(throw "Parameter -StorageAccountKey [string] is required."),
+    [string] $PublishSettingsFile = $(throw "Parameter -PublishSettingsFile [string] is required."),
+    [string] $SubscriptionName = $(throw "Parameter -SubscriptionName [string] is required."),
+    [string] $RoleName = $(throw "Parameter -RoleName [string] is required.")
+  )
+
+  $params = @{
+    SubscriptionId = $SubscriptionId
+    ServiceName = $ServiceName
+    Slot = $Slot
+    Configuration = $Configuration
+    StorageAccountName = $StorageAccountName
+    StorageAccountKey = $StorageAccountKey
+    PublishSettingsFile = $PublishSettingsFile
+    SubscriptionName = $SubscriptionName
+    RoleName = $RoleName
+  }
+
+  Import-Module Azure
+  
+  Write-Host "Importing Azure Publish Settings file: $($params.PublishSettingsFile)"
+  Import-AzurePublishSettingsFile $params.PublishSettingsFile -ErrorAction Stop 
+  
+  Write-Host "Selecting Azure Subscription: $($params.SubscriptionName)"
+  Select-AzureSubscription $params.SubscriptionName -ErrorAction Stop 
+  
+  Write-Host "Creating Azure Storage Context for account: $($params.StorageAccountName)"
+  $storageContext = New-AzureStorageContext -StorageAccountName $params.StorageAccountName -StorageAccountKey $params.StorageAccountKey -ErrorAction Stop 
+
+  Write-Host "Adding Azure Service Diagnostics to the $($params.ServiceName) $($params.RoleName) role using configuration at: $($params.Configuration)"
+  Write-Host "This command may take several minutes to complete due to installation and other actions happening within the role"
+  Set-AzureServiceDiagnosticsExtension -StorageContext $storageContext -DiagnosticsConfigurationPath "$($params.Configuration)" –ServiceName  "$($params.ServiceName)" -Slot 'Production' -Role "$($params.RoleName)" -ErrorAction Stop 
+
+  Remove-Module Azure -Force
+}
