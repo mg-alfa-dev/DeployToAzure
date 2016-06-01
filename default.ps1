@@ -1,4 +1,4 @@
-$framework = '4.0'
+$framework = '4.6'
 Set-StrictMode -Version Latest
 
 $solutionDir = Resolve-Path .
