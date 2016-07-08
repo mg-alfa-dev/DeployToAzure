@@ -1,4 +1,5 @@
-$framework = '4.6'
+Framework '4.6'
+
 Set-StrictMode -Version Latest
 
 $solutionDir = Resolve-Path .
@@ -55,7 +56,7 @@ task Compile-Solution -depends Pre-Compile -Description "Compiles the solution" 
 task ILMerge -depends Compile-Solution -Description "IL Merges the output EXE" {
   Write-Host "##teamcity[progressMessage 'IL Merging']"
   exec { 
-    & $toolsDir\ilmerge.exe $buildDir\DeployToAzureConsole.exe /lib:$buildDir 'Microsoft.WindowsAzure.StorageClient.dll' /targetplatform:"v4,C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /out:$buildDir\DeployToAzure.exe
+    & $toolsDir\ilmerge.exe $buildDir\DeployToAzureConsole.exe /lib:$buildDir 'Microsoft.WindowsAzure.Storage.dll' /targetplatform:"v4,C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /out:$buildDir\DeployToAzure.exe
   }
 }
 
