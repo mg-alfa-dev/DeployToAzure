@@ -77,11 +77,14 @@ namespace DeployToAzure
                 return 0;
             }
 
+            var dependenciesOnly = false;
             var tryToUseUpgradeDeployment = false;
             var fallbackToReplaceDeployment = false;
             var doNotRedeploy = false;
             if (args.Length > 1)
             {
+                if (args.Contains("--upload-dependencies-only"))
+                    dependenciesOnly = true;
                 if (args.Contains("--try-to-use-upgrade-deployment"))
                     tryToUseUpgradeDeployment = true;
                 if (args.Contains("--fallback-to-replace-deployment"))
@@ -98,6 +101,16 @@ namespace DeployToAzure
 
             try
             {
+                if (dependenciesOnly)
+                {
+                    if (configuration.StorageAccountKey == null || configuration.StorageAccountName == null)
+                    {
+                        OurTrace.TraceError("StorageAccountKey and StorageAccountName required for dependency upload.");
+                    }
+                    DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
+                    return 0;
+                }
+
                 var deploymentSlotManager = new AzureDeploymentSlot(managementApiWithRetries, configuration.DeploymentSlotUri);
                 if (doNotRedeploy)
                 {
@@ -207,7 +220,8 @@ namespace DeployToAzure
 
         private static void Usage()
         {
-            Console.WriteLine("Usage: DeployToAzure <parameters file name> [--delete] [--try-to-use-upgrade-deployment] [--fallback-to-replace-deployment]");
+            Console.WriteLine("Usage: DeployToAzure <parameters file name> [--upload-dependencies-only] [--delete] [--try-to-use-upgrade-deployment] [--fallback-to-replace-deployment]");
+            Console.WriteLine("  Upload Dependencies Only will only deploy the <BlobPathToDeploy> blobs to the storage account.");
             Console.WriteLine("  Delete parameter will cause deployment to be deleted and not redeployed");
             Console.WriteLine("  Parameters file is a XML file with the following contents:");
             Console.WriteLine("  <Params>");
@@ -253,7 +267,7 @@ namespace DeployToAzure
             blobRef.ServiceClient.DefaultRequestOptions.MaximumExecutionTime = blobRef.ServiceClient.DefaultRequestOptions.ServerTimeout;
             blobRef.Container.CreateIfNotExists();
 
-            blobRef.UploadFromFile(packageFileName, FileMode.Open);
+            blobRef.UploadFromFile(packageFileName);
         }
 
         private static void DeployBlobs(string blobPathToDeploy, string storageAccountName, string storageAccountKey)
@@ -288,7 +302,7 @@ namespace DeployToAzure
                     var container = client.GetContainerReference(f.Item1);
                     var blob = container.GetBlockBlobReference(f.Item2);
 
-                    blob.UploadFromFile(f.Item3, FileMode.Open);
+                    blob.UploadFromFile(f.Item3);
                     OurTrace.TraceInfo(string.Format("Uploaded Blob: {0} => {1}:{2}", f.Item3, f.Item1, f.Item2));
                 });
         }
