@@ -105,7 +105,8 @@ namespace DeployToAzure.Tests.Management
             {
                 Assert.That(deploymentUri, Is.EqualTo(ExpectedDeploymentUri));
                 return CurrentState == AzureDeploymentCheckOutcome.Running
-                       || CurrentState == AzureDeploymentCheckOutcome.Suspended;
+                       || CurrentState == AzureDeploymentCheckOutcome.Suspended
+                       || CurrentState == AzureDeploymentCheckOutcome.RunningTransitioning;
             }
 
             public void WaitForDeploymentStatus(DeploymentSlotUri deploymentUri, AzureDeploymentCheckOutcome status)
