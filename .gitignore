@@ -1,9 +1,10 @@
 _ReSharper*
 *.sln.docstates
-bin
-Bin
-build
-obj
+[Pp]ackages
+[bB]in
+[oO]bj
+[bB]uild
+.vs/
 *.suo
 *.ncb
 *.vsp
