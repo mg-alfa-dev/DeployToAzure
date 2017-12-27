@@ -39,6 +39,7 @@ namespace DeployToAzure.Management
 
             switch (outcome)
             {
+                case AzureDeploymentCheckOutcome.RunningTransitioning:
                 case AzureDeploymentCheckOutcome.Running:
                 case AzureDeploymentCheckOutcome.Suspended:
                     return true;

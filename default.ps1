@@ -19,7 +19,7 @@ properties {
   $unitTestReport = "$unitTestReportPath\UnitTestReport.xml"
   $solution = "DeployToAzure.sln"
   $packageZip = "$buildDir\DeployToAzure.zip"
-  $packageFiles = @("$buildDir\DeployToAzure.exe", "$buildDir\DeployToAzure.ps1")
+  $packageFiles = @("$buildDir\ilmerged\DeployToAzure.exe", "$buildDir\ilmerged\DeployToAzure.pdb", "$buildDir\DeployToAzure.ps1")
 }
 
 task default -depends Compile, Unit-Test, Publish
@@ -55,8 +55,9 @@ task Compile-Solution -depends Pre-Compile -Description "Compiles the solution" 
 
 task ILMerge -depends Compile-Solution -Description "IL Merges the output EXE" {
   Write-Host "##teamcity[progressMessage 'IL Merging']"
-  exec { 
-    & $toolsDir\ilmerge.exe $buildDir\DeployToAzureConsole.exe /lib:$buildDir 'Microsoft.WindowsAzure.Storage.dll' /targetplatform:"v4,C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /out:$buildDir\DeployToAzure.exe
+  exec {
+    mkdir "$buildDir\ilmerged"
+    & $toolsDir\ilmerge.exe $buildDir\DeployToAzureConsole.exe 'Microsoft.WindowsAzure.Storage.dll' 'Newtonsoft.Json.dll' 'Microsoft.Data.Edm.dll' 'Microsoft.Data.OData.dll' 'Microsoft.Data.Services.Client.dll' 'Microsoft.Azure.KeyVault.Core.dll' /lib:$buildDir /targetplatform:"v4,C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2" /out:$buildDir\ilmerged\DeployToAzure.exe
   }
 }
 
