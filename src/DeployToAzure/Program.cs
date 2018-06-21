@@ -145,14 +145,14 @@ namespace DeployToAzure
 
                     if (string.IsNullOrWhiteSpace(configuration.StorageAccountKey))
                     {
-                        OurTrace.TraceInfo(string.Format("Looking up storage keys for account: {0}", configuration.StorageAccountName));
+                        OurTrace.TraceInfo($"Looking up storage keys for account: {configuration.StorageAccountName}");
                         var storageKeys = azureDeploymentDeploymentLowLevelApi.GetStorageAccountKeys(subscriptionId, configuration.StorageAccountName);
 
                         configuration.StorageAccountKey = storageKeys.FirstOrDefault();
 
                         if (string.IsNullOrWhiteSpace(configuration.StorageAccountKey))
                         {
-                            OurTrace.TraceError(string.Format("Couldn't find any keys for storage account: {0}", configuration.StorageAccountName));
+                            OurTrace.TraceError($"Couldn't find any keys for storage account: {configuration.StorageAccountName}");
                             throw new InvalidOperationException("No suitable storage account keys.");
                         }
                     }
@@ -178,7 +178,8 @@ namespace DeployToAzure
                     }
                     catch(BadRequestException ex)
                     {
-                        OurTrace.TraceError(string.Format("Upgrade failed with message: {0}\r\n, **** {1}", ex, fallbackToReplaceDeployment ? "falling back to replace." : "exiting."));
+                        OurTrace.TraceError(
+                            $"Upgrade failed with message: {ex}\r\n, **** {(fallbackToReplaceDeployment ? "falling back to replace." : "exiting.")}");
                         // retry using CreateOrReplaceDeployment, since we might have tried to do something that isn't allowed with UpgradeDeployment.
                         if (fallbackToReplaceDeployment)
                             deploymentSlotManager.CreateOrReplaceDeployment(configuration);
@@ -195,7 +196,7 @@ namespace DeployToAzure
             }
             catch(Exception ex)
             {
-                OurTrace.TraceError(string.Format("exception!\n{0}", ex));
+                OurTrace.TraceError($"exception!\n{ex}");
                 return -1;
             }
             return 0;
@@ -205,8 +206,8 @@ namespace DeployToAzure
         {
             if (!ValidateVmSize(newVmSize))
             {
-                OurTrace.TraceError(string.Format("Invalid vmsize: {0} - should be ({1})", newVmSize,
-                    string.Join(" | ", ValidVmSizeValues)));
+                OurTrace.TraceError(
+                    $"Invalid vmsize: {newVmSize} - should be ({string.Join(" | ", ValidVmSizeValues)})");
                 Environment.Exit(-2);
             }
 
@@ -246,7 +247,7 @@ namespace DeployToAzure
 
         private static void DeleteBlob(string packageUrl, string storageAccountName, string storageAccountKey)
         {
-            OurTrace.TraceInfo(string.Format("Deleting blob {0}", packageUrl));
+            OurTrace.TraceInfo($"Deleting blob {packageUrl}");
 
             var packageUri = new Uri(packageUrl);
             var credentials = new StorageCredentials(storageAccountName, storageAccountKey);
@@ -257,7 +258,7 @@ namespace DeployToAzure
 
         private static void UploadBlob(string packageFileName, string packageUrl, string storageAccountName, string storageAccountKey)
         {
-            OurTrace.TraceInfo(string.Format("Uploading blob from {0} to {1}", packageFileName, packageUrl));
+            OurTrace.TraceInfo($"Uploading blob from {packageFileName} to {packageUrl}");
 
             var packageUri = new Uri(packageUrl);
             var credentials = new StorageCredentials(storageAccountName, storageAccountKey);
@@ -272,7 +273,7 @@ namespace DeployToAzure
 
         private static void DeployBlobs(string blobPathToDeploy, string storageAccountName, string storageAccountKey)
         {
-            OurTrace.TraceInfo(string.Format("Deploying blobs from {0} to {1}", blobPathToDeploy, storageAccountName));
+            OurTrace.TraceInfo($"Deploying blobs from {blobPathToDeploy} to {storageAccountName}");
 
             var credentials = new StorageCredentials(storageAccountName, storageAccountKey);
             var storageAccount = new CloudStorageAccount(credentials, true);
@@ -286,7 +287,7 @@ namespace DeployToAzure
                 folder =>
                 {
                     client.GetContainerReference(folder).CreateIfNotExists();
-                    OurTrace.TraceInfo(string.Format("Created container: {0}", folder));
+                    OurTrace.TraceInfo($"Created container: {folder}");
                 });
 
             var files = from folder in folders
@@ -303,7 +304,7 @@ namespace DeployToAzure
                     var blob = container.GetBlockBlobReference(f.Item2);
 
                     blob.UploadFromFile(f.Item3);
-                    OurTrace.TraceInfo(string.Format("Uploaded Blob: {0} => {1}:{2}", f.Item3, f.Item1, f.Item2));
+                    OurTrace.TraceInfo($"Uploaded Blob: {f.Item3} => {f.Item1}:{f.Item2}");
                 });
         }
     }
