@@ -43,6 +43,7 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
                 writer.WriteLine("    <MaxRetries>12</MaxRetries>");
                 writer.WriteLine("    <RetryIntervalInSeconds>12</RetryIntervalInSeconds>");
                 writer.WriteLine("    <Force>true</Force>");
+                writer.WriteLine("    <ChangeVMSize>small</ChangeVMSize>");
                 writer.WriteLine("  </Params>");
             }
 
@@ -125,6 +126,12 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
         public void it_parses_the_force_setting()
         {
             Assert.That(configuration.Force);
+        }
+
+        [Test]
+        public void it_parsers_the_vm_size()
+        {
+            Assert.That(configuration.ChangeVMSize, Is.EqualTo("small"));
         }
     }
 }
