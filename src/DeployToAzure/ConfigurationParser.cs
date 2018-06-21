@@ -28,6 +28,8 @@ namespace DeployToAzure
             string retryIntervalInSeconds = arguments.RetryIntervalInSeconds.Value ?? "15";
             string blobPathToDeploy = arguments.BlobPathToDeploy.Value;
             string changeVMSize = arguments.ChangeVMSize.Value;
+            string changeWebRoleVMSize = arguments.ChangeWebRoleVMSize.Value;
+            string changeWorkerRoleVMSize = arguments.ChangeWorkerRoleVMSize.Value;
 
             OurTrace.TraceInfo("Using parameters:");
             OurTrace.TraceInfo($"subscriptionId: {subscriptionId}");
@@ -47,6 +49,8 @@ namespace DeployToAzure
             OurTrace.TraceInfo($"retryIntervalInSeconds: {retryIntervalInSeconds}");
             OurTrace.TraceInfo($"blobPathToDeploy: {blobPathToDeploy}");
             OurTrace.TraceInfo($"changeVMSize: {changeVMSize}");
+            OurTrace.TraceInfo($"changeWebRoleVMSize: {changeWebRoleVMSize}");
+            OurTrace.TraceInfo($"changeWorkerRoleVMSize: {changeWorkerRoleVMSize}");
 
             var serviceConfigurationString = File.ReadAllText(serviceConfigurationPath);
 
@@ -67,6 +71,8 @@ namespace DeployToAzure
                 RetryIntervalInSeconds = int.Parse(retryIntervalInSeconds),
                 BlobPathToDeploy = blobPathToDeploy,
                 ChangeVMSize = changeVMSize,
+                ChangeWebRoleVMSize = changeWebRoleVMSize,
+                ChangeWorkerRoleVMSize = changeWorkerRoleVMSize,
             };
         }
     }

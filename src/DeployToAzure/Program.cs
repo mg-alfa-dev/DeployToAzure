@@ -15,7 +15,7 @@ namespace DeployToAzure
 {
     static class Program
     {
-        static readonly HashSet<string> ValidVmSizeValues = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        private static readonly HashSet<string> _ValidVmSizeValues = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
             {
                 "ExtraSmall",
                 "Small",
@@ -65,6 +65,7 @@ namespace DeployToAzure
                 "Standard_GS4",
                 "Standard_GS5",
             };
+
         static int Main(string[] args)
         {
             var consoleTraceListener = new OurConsoleTraceListener();
@@ -122,7 +123,7 @@ namespace DeployToAzure
                 if (configuration.StorageAccountKey == null || configuration.StorageAccountName == null)
                 {
                     OurTrace.TraceInfo("Attempting to guess account name and key based on certificate.");
-                    
+
                     if (string.IsNullOrWhiteSpace(configuration.StorageAccountName))
                     {
                         OurTrace.TraceInfo("Looking up storage accounts for the subscription.");
@@ -158,16 +159,10 @@ namespace DeployToAzure
                     }
                 }
 
-                var csPkg = configuration.PackageFileName;
-                if (!string.IsNullOrWhiteSpace(configuration.ChangeVMSize))
-                {
-                    csPkg = Path.GetTempFileName();
-                    File.Copy(configuration.PackageFileName, csPkg, true);
-                    ChangeVmSize(csPkg, configuration.ChangeVMSize);
-                }
+                var csPkg = ConfigureDeploymentPackage(configuration, configuration.PackageFileName);
 
                 UploadBlob(csPkg, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
-                if(!string.IsNullOrWhiteSpace(configuration.BlobPathToDeploy))
+                if (!string.IsNullOrWhiteSpace(configuration.BlobPathToDeploy))
                     DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
 
                 if (tryToUseUpgradeDeployment && managementApiWithRetries.DoesDeploymentExist(configuration.DeploymentSlotUri))
@@ -176,7 +171,7 @@ namespace DeployToAzure
                     {
                         deploymentSlotManager.UpgradeDeployment(configuration);
                     }
-                    catch(BadRequestException ex)
+                    catch (BadRequestException ex)
                     {
                         OurTrace.TraceError(
                             $"Upgrade failed with message: {ex}\r\n, **** {(fallbackToReplaceDeployment ? "falling back to replace." : "exiting.")}");
@@ -194,7 +189,7 @@ namespace DeployToAzure
 
                 DeleteBlob(configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 OurTrace.TraceError($"exception!\n{ex}");
                 return -1;
@@ -202,21 +197,57 @@ namespace DeployToAzure
             return 0;
         }
 
+        private static string ConfigureDeploymentPackage(DeploymentConfiguration configuration, string csPkg)
+        {
+            var hasSpecificVmSizes = !string.IsNullOrWhiteSpace(configuration.ChangeWebRoleVMSize) &&
+                                     !string.IsNullOrWhiteSpace(configuration.ChangeWorkerRoleVMSize);
+            var hasAllVmSize = !string.IsNullOrWhiteSpace(configuration.ChangeVMSize);
+
+            if (!hasAllVmSize && !hasSpecificVmSizes)
+            {
+                return csPkg;
+            }
+
+            csPkg = Path.GetTempFileName();
+            File.Copy(configuration.PackageFileName, csPkg, true);
+
+            if (hasSpecificVmSizes)
+            {
+                OurTrace.TraceInfo("Role specific VM Sizes specified. We will use these.");
+                ChangeVmSize(csPkg, configuration.ChangeWebRoleVMSize, configuration.ChangeWorkerRoleVMSize);
+                return csPkg;
+            }
+
+            OurTrace.TraceInfo("Only generic role sizes specified. Using them for all roles.");
+            ChangeVmSize(csPkg, configuration.ChangeVMSize);
+            return csPkg;
+        }
+
+        private static void ChangeVmSize(string tempPackageFilePath, string webRoleVmSize, string workerRoleVmSize)
+        {
+            if (!ValidateVmSize(webRoleVmSize) && !ValidateVmSize(workerRoleVmSize))
+            {
+                OurTrace.TraceError($"Invalid vmsizes: webRoleVM -> ({webRoleVmSize}), workerRoleVM -> ({workerRoleVmSize}) - should be one of ({string.Join(" | ", _ValidVmSizeValues)})");
+                Environment.Exit(-2);
+            }
+
+            VMSizeChanger.ChangeVmSize(tempPackageFilePath, webRoleVmSize, workerRoleVmSize);
+        }
+
         private static void ChangeVmSize(string tempPackageFilePath, string newVmSize)
         {
             if (!ValidateVmSize(newVmSize))
             {
-                OurTrace.TraceError(
-                    $"Invalid vmsize: {newVmSize} - should be ({string.Join(" | ", ValidVmSizeValues)})");
+                OurTrace.TraceError($"Invalid vmsize: ({newVmSize}) - should be ({string.Join(" | ", _ValidVmSizeValues)})");
                 Environment.Exit(-2);
             }
 
-            VMSizeChanger.ChangeVMSize(tempPackageFilePath, newVmSize);
+            VMSizeChanger.ChangeVmSize(tempPackageFilePath, newVmSize);
         }
 
         private static bool ValidateVmSize(string newVmSize)
         {
-            return ValidVmSizeValues.Contains(newVmSize);
+            return _ValidVmSizeValues.Contains(newVmSize);
         }
 
         private static void Usage()
@@ -241,7 +272,9 @@ namespace DeployToAzure
             Console.WriteLine("    <MaxRetries>(number of times to retry any operation)</MaxRetries>");
             Console.WriteLine("    <RetryIntervalInSeconds>(time to wait between retries of operations (in seconds))</RetryIntervalInSeconds>");
             Console.WriteLine("    <BlobPathToDeploy>(path to blobs that also need deployment (optional))</BlobPathToDeploy>");
-            Console.WriteLine("    <ChangeVmSize>(vm size to change to (optional))</ChangeVmSize>");
+            Console.WriteLine("    <ChangeVmSize>(vm size to change to (optional). Mutually exclusive from params 'ChangeWebRoleVMSize' and 'ChangeWorkerRoleVMSize')</ChangeVmSize>");
+            Console.WriteLine("    <ChangeWebRoleVMSize>(vm size to change to (optional))</ChangeWebRoleVMSize>");
+            Console.WriteLine("    <ChangeWorkerRoleVMSize>(vm size to change to (optional))</ChangeWorkerRoleVMSize>");
             Console.WriteLine("  </Params>");
         }
 

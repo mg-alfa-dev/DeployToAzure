@@ -38,6 +38,8 @@ namespace DeployToAzure.Management
         public int RetryIntervalInSeconds;
         public string BlobPathToDeploy;
         public string ChangeVMSize;
+        public string ChangeWebRoleVMSize;
+        public string ChangeWorkerRoleVMSize;
 
         public string MakeCreateDeploymentMessage()
         {

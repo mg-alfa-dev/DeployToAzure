@@ -15,6 +15,7 @@ namespace DeployToAzure
 
         public void SetHash(Uri targetUri, byte[] sha2Hash)
         {
+            ManifestStream.Stream.Position = 0;
             var hashText = string.Join("", sha2Hash.Select(x => x.ToString("X2")));
             var manifestXml = XDocument.Load(ManifestStream.Stream);
             var uriString = targetUri.OriginalString;
