@@ -17,7 +17,9 @@ function Create-DeployParams
     [string] $CertPassword = $(throw "Parameter -CertPassword [string] is required."),
     [IO.FileInfo] $OutFile = $(throw "Parameter -OutFile [IO.FileInfo] is required."),
     [IO.FileInfo] $BlobPathToDeploy = $null,
-    [string] $ChangeVMSize = $null
+    [string] $ChangeVMSize = $null,
+    [string] $ChangeWebRoleVMSize = $null,
+    [string] $ChangeWorkerRoleVMSize = $null
   )
   
   $params = @{
@@ -51,6 +53,11 @@ function Create-DeployParams
     $params.ChangeVMSize = $ChangeVMSize
   }
   
+  if(($ChangeWebRoleVMSize -ne $null) -and ($ChangeWorkerRoleVMSize -ne $null)) {
+    $params.ChangeWebRoleVMSize = $ChangeWebRoleVMSize
+    $params.ChangeWorkerRoleVMSize = $ChangeWorkerRoleVMSize
+}
+
   $xml = "<Params>"
   $params.Keys | %{ $xml += "`n  <$($_)>$($params[$_])</$($_)>" }
   $xml += "`n</Params>"

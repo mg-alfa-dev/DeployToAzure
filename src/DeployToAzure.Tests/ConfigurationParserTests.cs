@@ -36,13 +36,16 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
                 writer.WriteLine("    <CertFileName>cert file name</CertFileName>");
                 writer.WriteLine("    <CertPassword>cert password</CertPassword>");
                 writer.WriteLine("    <PackageFileName>package file name</PackageFileName>");
-                writer.WriteLine("    <ServiceConfigurationPath>{0}</ServiceConfigurationPath>",serviceConfigurationPath);
+                writer.WriteLine("    <ServiceConfigurationPath>{0}</ServiceConfigurationPath>", serviceConfigurationPath);
                 writer.WriteLine("    <DeploymentLabel>deployment label</DeploymentLabel>");
                 writer.WriteLine("    <DeploymentName>deployment name</DeploymentName>");
                 writer.WriteLine("    <RoleName>role name</RoleName>");
                 writer.WriteLine("    <MaxRetries>12</MaxRetries>");
                 writer.WriteLine("    <RetryIntervalInSeconds>12</RetryIntervalInSeconds>");
                 writer.WriteLine("    <Force>true</Force>");
+                writer.WriteLine("    <ChangeVMSize>small</ChangeVMSize>");
+                writer.WriteLine("    <ChangeWebRoleVMSize>x-small</ChangeWebRoleVMSize>");
+                writer.WriteLine("    <ChangeWorkerRoleVMSize>Large</ChangeWorkerRoleVMSize>");
                 writer.WriteLine("  </Params>");
             }
 
@@ -125,6 +128,24 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
         public void it_parses_the_force_setting()
         {
             Assert.That(configuration.Force);
+        }
+
+        [Test]
+        public void it_parses_the_vm_size()
+        {
+            Assert.That(configuration.ChangeVMSize, Is.EqualTo("small"));
+        }
+
+        [Test]
+        public void it_parses_the_web_role_vm_size()
+        {
+            Assert.That(configuration.ChangeWebRoleVMSize, Is.EqualTo("x-small"));
+        }
+
+        [Test]
+        public void it_parses_the_worker_role_vm_size()
+        {
+            Assert.That(configuration.ChangeWorkerRoleVMSize, Is.EqualTo("Large"));
         }
     }
 }

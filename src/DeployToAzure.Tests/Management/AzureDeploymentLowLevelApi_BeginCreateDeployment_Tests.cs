@@ -41,9 +41,7 @@ namespace DeployToAzure.Tests.Management
 
             var api = new AzureManagementLowLevelApi(http);
             var config = MockRepository.GenerateStub<IDeploymentConfiguration>();
-            Assert.That(
-                () => api.BeginCreate(TestDeploymentUri, config), 
-                Throws.TypeOf<UnhandledHttpException>());
+            Assert.That(() => api.BeginCreate(TestDeploymentUri, config), Throws.TypeOf<UnhandledHttpException>());
         }
 
         [Test]

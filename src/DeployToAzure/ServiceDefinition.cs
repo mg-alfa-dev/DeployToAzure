@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 
 namespace DeployToAzure
@@ -21,11 +21,13 @@ namespace DeployToAzure
             PartStream.Dispose();
         }
 
-        public void ChangeVMSizes(string newVMSize)
+        public void ChangeVmSize(string roleName, string newVmSize)
         {
+            PartStream.Stream.Position = 0;
             var rootElement = XDocument.Load(PartStream.Stream);
-            foreach (var element in rootElement.Elements().Elements())
-                element.SetAttributeValue("vmsize", newVMSize);
+            var element = rootElement.Elements().Elements().First(x => string.Equals(x.Name.LocalName, roleName, StringComparison.OrdinalIgnoreCase));
+
+            element.SetAttributeValue("vmsize", newVmSize);
 
             PartStream.Stream.Position = 0;
             rootElement.Save(PartStream.Stream);
@@ -33,5 +35,5 @@ namespace DeployToAzure
 
             Manifest.SetHash(PartStream.Rel.TargetUri, PartStream.ComputeHash());
         }
-    }
+   }
 }

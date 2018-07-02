@@ -28,25 +28,29 @@ namespace DeployToAzure
             string retryIntervalInSeconds = arguments.RetryIntervalInSeconds.Value ?? "15";
             string blobPathToDeploy = arguments.BlobPathToDeploy.Value;
             string changeVMSize = arguments.ChangeVMSize.Value;
+            string changeWebRoleVMSize = arguments.ChangeWebRoleVMSize.Value;
+            string changeWorkerRoleVMSize = arguments.ChangeWorkerRoleVMSize.Value;
 
             OurTrace.TraceInfo("Using parameters:");
-            OurTrace.TraceInfo(string.Format("subscriptionId: {0}", subscriptionId));
-            OurTrace.TraceInfo(string.Format("serviceName: {0}", serviceName));
-            OurTrace.TraceInfo(string.Format("deploymentSlot: {0}", deploymentSlot));
-            OurTrace.TraceInfo(string.Format("storageAccountName: {0}", storageAccountName));
-            OurTrace.TraceInfo(string.Format("storageAccountKey: {0}", storageAccountKey));
-            OurTrace.TraceInfo(string.Format("certFileName: {0}", certFileName));
-            OurTrace.TraceInfo(string.Format("certPassword: {0}", certPassword));
-            OurTrace.TraceInfo(string.Format("packageFileName: {0}", packageFileName));
-            OurTrace.TraceInfo(string.Format("serviceConfigurationPath: {0}", serviceConfigurationPath));
-            OurTrace.TraceInfo(string.Format("deploymentLabel: {0}", deploymentLabel));
-            OurTrace.TraceInfo(string.Format("deploymentName: {0}", deploymentName));
-            OurTrace.TraceInfo(string.Format("roleName: {0}", roleName));
-            OurTrace.TraceInfo(string.Format("force: {0}", force));
-            OurTrace.TraceInfo(string.Format("maxRetries: {0}", maxRetries));
-            OurTrace.TraceInfo(string.Format("retryIntervalInSeconds: {0}", retryIntervalInSeconds));
-            OurTrace.TraceInfo(string.Format("blobPathToDeploy: {0}", blobPathToDeploy));
-            OurTrace.TraceInfo(string.Format("changeVMSize: {0}", changeVMSize));
+            OurTrace.TraceInfo($"subscriptionId: {subscriptionId}");
+            OurTrace.TraceInfo($"serviceName: {serviceName}");
+            OurTrace.TraceInfo($"deploymentSlot: {deploymentSlot}");
+            OurTrace.TraceInfo($"storageAccountName: {storageAccountName}");
+            OurTrace.TraceInfo($"storageAccountKey: {storageAccountKey}");
+            OurTrace.TraceInfo($"certFileName: {certFileName}");
+            OurTrace.TraceInfo($"certPassword: {certPassword}");
+            OurTrace.TraceInfo($"packageFileName: {packageFileName}");
+            OurTrace.TraceInfo($"serviceConfigurationPath: {serviceConfigurationPath}");
+            OurTrace.TraceInfo($"deploymentLabel: {deploymentLabel}");
+            OurTrace.TraceInfo($"deploymentName: {deploymentName}");
+            OurTrace.TraceInfo($"roleName: {roleName}");
+            OurTrace.TraceInfo($"force: {force}");
+            OurTrace.TraceInfo($"maxRetries: {maxRetries}");
+            OurTrace.TraceInfo($"retryIntervalInSeconds: {retryIntervalInSeconds}");
+            OurTrace.TraceInfo($"blobPathToDeploy: {blobPathToDeploy}");
+            OurTrace.TraceInfo($"changeVMSize: {changeVMSize}");
+            OurTrace.TraceInfo($"changeWebRoleVMSize: {changeWebRoleVMSize}");
+            OurTrace.TraceInfo($"changeWorkerRoleVMSize: {changeWorkerRoleVMSize}");
 
             var serviceConfigurationString = File.ReadAllText(serviceConfigurationPath);
 
@@ -67,6 +71,8 @@ namespace DeployToAzure
                 RetryIntervalInSeconds = int.Parse(retryIntervalInSeconds),
                 BlobPathToDeploy = blobPathToDeploy,
                 ChangeVMSize = changeVMSize,
+                ChangeWebRoleVMSize = changeWebRoleVMSize,
+                ChangeWorkerRoleVMSize = changeWorkerRoleVMSize,
             };
         }
     }
