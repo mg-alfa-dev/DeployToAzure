@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using DeployToAzure.Management;
 using DeployToAzure.Utility;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Auth;
+using Microsoft.Azure.Storage.Blob;
 
 namespace DeployToAzure
 {
