@@ -57,7 +57,7 @@ task ILMerge -depends Compile-Solution -Description "IL Merges the output EXE" {
   Write-Host "##teamcity[progressMessage 'IL Merging']"
   exec {
     mkdir "$buildDir\ilmerged"
-    & $toolsDir\ilmerge.exe $buildDir\DeployToAzureConsole.exe 'Microsoft.WindowsAzure.Storage.dll' 'Newtonsoft.Json.dll' 'Microsoft.Data.Edm.dll' 'Microsoft.Data.OData.dll' 'Microsoft.Data.Services.Client.dll' 'Microsoft.Azure.KeyVault.Core.dll' /lib:$buildDir /targetplatform:"v4,C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2" /out:$buildDir\ilmerged\DeployToAzure.exe
+    & $toolsDir\ilmerge.exe $buildDir\DeployToAzureConsole.exe 'Microsoft.Azure.Storage.Blob.dll' 'Microsoft.Azure.Storage.Common.dll' 'Newtonsoft.Json.dll' 'System.IO.FileSystem.Primitives.dll' 'System.IO.Packaging.dll' /lib:$buildDir /targetplatform:"v4,C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2" /out:$buildDir\ilmerged\DeployToAzure.exe
   }
 }
 
