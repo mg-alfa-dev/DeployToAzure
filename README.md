@@ -1,9 +1,12 @@
-This is the DeployToAzure project.
+# DeployToAzure
 
-It is a command-line tool that the we use on my team for Command-Line deployments of our Windows Azure applications.
-
-We decided to make it available for anyone to use.  Let us know if you use it and see any changes needed for it.
-
-It should be easy to build and run unit tests.  Let us know if you run into any problems.
+DeployToAzure is a command-line tool that the we use for command-line deployments of our Azure Cloud Services applications.
 
 The DeployToAzure.ps1 file provides some simple helpers around the DeployToAzure.exe.
+
+## Build & Test
+
+`dotnet build`
+`dotnet test`
+
+There is also a `build.cmd` file that runs `dotnet test -c release` and then, on success, produces a single executable using ILMerge.
