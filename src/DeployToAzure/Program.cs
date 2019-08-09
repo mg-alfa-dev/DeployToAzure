@@ -10,63 +10,13 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Azure.Storage.DataMovement;
 
 namespace DeployToAzure
 {
     static class Program
     {
-        private static readonly HashSet<string> _ValidVmSizeValues = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-            {
-                "ExtraSmall",
-                "Small",
-                "Medium",
-                "Large",
-                "ExtraLarge",
-                "Standard_A5",
-                "Standard_A6",
-                "Standard_A7",
-                "Standard_A8",
-                "Standard_A9",
-                "Standard_A10",
-                "Standard_A11",
-                "Standard_D1",
-                "Standard_D2",
-                "Standard_D3",
-                "Standard_D4",
-                "Standard_D11",
-                "Standard_D12",
-                "Standard_D13",
-                "Standard_D14",
-                "Standard_D1_v2",
-                "Standard_D2_v2",
-                "Standard_D3_v2",
-                "Standard_D4_v2",
-                "Standard_D5_v2",
-                "Standard_D11_v2",
-                "Standard_D12_v2",
-                "Standard_D13_v2",
-                "Standard_D14_v2",
-                "Standard_DS1",
-                "Standard_DS2",
-                "Standard_DS3",
-                "Standard_DS4",
-                "Standard_DS11",
-                "Standard_DS12",
-                "Standard_DS13",
-                "Standard_DS14",
-                "Standard_G1",
-                "Standard_G2",
-                "Standard_G3",
-                "Standard_G4",
-                "Standard_G5",
-                "Standard_GS1",
-                "Standard_GS2",
-                "Standard_GS3",
-                "Standard_GS4",
-                "Standard_GS5",
-            };
-
-        static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var consoleTraceListener = new OurConsoleTraceListener();
             OurTrace.AddListener(consoleTraceListener);
@@ -108,7 +58,7 @@ namespace DeployToAzure
                     {
                         OurTrace.TraceError("StorageAccountKey and StorageAccountName required for dependency upload.");
                     }
-                    DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
+                    await DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
                     return 0;
                 }
 
@@ -161,9 +111,11 @@ namespace DeployToAzure
 
                 var csPkg = ConfigureDeploymentPackage(configuration, configuration.PackageFileName);
 
-                UploadBlob(csPkg, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey);
-                if (!string.IsNullOrWhiteSpace(configuration.BlobPathToDeploy))
-                    DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey);
+                await Task.WhenAll(
+                    UploadBlob(csPkg, configuration.PackageUrl, configuration.StorageAccountName, configuration.StorageAccountKey),
+                    DeployBlobs(configuration.BlobPathToDeploy, configuration.StorageAccountName, configuration.StorageAccountKey)
+                );
+
 
                 if (tryToUseUpgradeDeployment && managementApiWithRetries.DoesDeploymentExist(configuration.DeploymentSlotUri))
                 {
@@ -173,8 +125,7 @@ namespace DeployToAzure
                     }
                     catch (BadRequestException ex)
                     {
-                        OurTrace.TraceError(
-                            $"Upgrade failed with message: {ex}\r\n, **** {(fallbackToReplaceDeployment ? "falling back to replace." : "exiting.")}");
+                        OurTrace.TraceError($"Upgrade failed with message: {ex}\r\n, **** {(fallbackToReplaceDeployment ? "falling back to replace." : "exiting.")}");
                         // retry using CreateOrReplaceDeployment, since we might have tried to do something that isn't allowed with UpgradeDeployment.
                         if (fallbackToReplaceDeployment)
                             deploymentSlotManager.CreateOrReplaceDeployment(configuration);
@@ -289,7 +240,7 @@ namespace DeployToAzure
             blobRef.DeleteIfExists();
         }
 
-        private static void UploadBlob(string packageFileName, string packageUrl, string storageAccountName, string storageAccountKey)
+        private static Task UploadBlob(string packageFileName, string packageUrl, string storageAccountName, string storageAccountKey)
         {
             OurTrace.TraceInfo($"Uploading blob from {packageFileName} to {packageUrl}");
 
@@ -301,10 +252,10 @@ namespace DeployToAzure
             blobRef.ServiceClient.DefaultRequestOptions.MaximumExecutionTime = blobRef.ServiceClient.DefaultRequestOptions.ServerTimeout;
             blobRef.Container.CreateIfNotExists();
 
-            blobRef.UploadFromFile(packageFileName);
+            return TransferManager.UploadAsync(packageFileName, blobRef);
         }
 
-        private static void DeployBlobs(string blobPathToDeploy, string storageAccountName, string storageAccountKey)
+        private static async Task DeployBlobs(string blobPathToDeploy, string storageAccountName, string storageAccountKey)
         {
             OurTrace.TraceInfo($"Deploying blobs from {blobPathToDeploy} to {storageAccountName}");
 
@@ -314,31 +265,78 @@ namespace DeployToAzure
             client.DefaultRequestOptions.ServerTimeout = TimeSpan.FromMinutes(15);
             client.DefaultRequestOptions.MaximumExecutionTime = client.DefaultRequestOptions.ServerTimeout; 
             var folders = Directory.GetDirectories(blobPathToDeploy);
-            Parallel.ForEach(
-                folders.Select(Path.GetFileName),
-                new ParallelOptions { MaxDegreeOfParallelism = 6 },
-                folder =>
-                {
-                    client.GetContainerReference(folder).CreateIfNotExists();
-                    OurTrace.TraceInfo($"Created container: {folder}");
-                });
+
+            await Task.WhenAll(folders.Select(Path.GetFileName).Select(folder =>
+            {
+                OurTrace.TraceInfo($"Creating container: {folder}");
+                return client.GetContainerReference(folder).CreateIfNotExistsAsync();
+            }));
 
             var files = from folder in folders
                         from file in Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories)
                         let result = Tuple.Create(Path.GetFileName(folder), file.Remove(0, folder.Length + 1), file)
                         select result;
 
-            Parallel.ForEach(
-                files,
-                new ParallelOptions { MaxDegreeOfParallelism = 6 },
-                f =>
-                {
-                    var container = client.GetContainerReference(f.Item1);
+            await Task.WhenAll(files.Select(f =>
+            {
+                var container = client.GetContainerReference(f.Item1);
                     var blob = container.GetBlockBlobReference(f.Item2);
-
-                    blob.UploadFromFile(f.Item3);
-                    OurTrace.TraceInfo($"Uploaded Blob: {f.Item3} => {f.Item1}:{f.Item2}");
-                });
+                    var uploadOptions = new UploadOptions { DestinationAccessCondition = AccessCondition.GenerateEmptyCondition() };
+                    var context = new SingleTransferContext { ShouldOverwriteCallbackAsync = (x, y) => Task.FromResult(true) };
+                    OurTrace.TraceInfo($"Uploading Blob: {f.Item3} => {f.Item1}:{f.Item2}");
+                    return TransferManager.UploadAsync(f.Item3, blob, uploadOptions, context);
+            }));
         }
+
+        private static readonly HashSet<string> _ValidVmSizeValues = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "ExtraSmall",
+            "Small",
+            "Medium",
+            "Large",
+            "ExtraLarge",
+            "Standard_A5",
+            "Standard_A6",
+            "Standard_A7",
+            "Standard_A8",
+            "Standard_A9",
+            "Standard_A10",
+            "Standard_A11",
+            "Standard_D1",
+            "Standard_D2",
+            "Standard_D3",
+            "Standard_D4",
+            "Standard_D11",
+            "Standard_D12",
+            "Standard_D13",
+            "Standard_D14",
+            "Standard_D1_v2",
+            "Standard_D2_v2",
+            "Standard_D3_v2",
+            "Standard_D4_v2",
+            "Standard_D5_v2",
+            "Standard_D11_v2",
+            "Standard_D12_v2",
+            "Standard_D13_v2",
+            "Standard_D14_v2",
+            "Standard_DS1",
+            "Standard_DS2",
+            "Standard_DS3",
+            "Standard_DS4",
+            "Standard_DS11",
+            "Standard_DS12",
+            "Standard_DS13",
+            "Standard_DS14",
+            "Standard_G1",
+            "Standard_G2",
+            "Standard_G3",
+            "Standard_G4",
+            "Standard_G5",
+            "Standard_GS1",
+            "Standard_GS2",
+            "Standard_GS3",
+            "Standard_GS4",
+            "Standard_GS5",
+        };
     }
 }
