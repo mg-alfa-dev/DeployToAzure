@@ -20,7 +20,7 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
         private DeploymentConfiguration configuration;
         private string serviceConfigurationPath;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetUp()
         {
             configurationFileName = Path.GetTempFileName();
@@ -55,7 +55,7 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
             configuration = ConfigurationParser.ParseConfiguration(configurationFileName);
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TearDown()
         {
             if (File.Exists(configurationFileName))
@@ -91,7 +91,7 @@ namespace DeployToAzure.Tests.ConfigurationParserTests
         [Test]
         public void it_parses_the_package_url()
         {
-           Assert.That(configuration.PackageUrl, Is.StringMatching(@"^https://storage account name.blob.core.windows.net/deployment-package/[a-f0-9\\-]{36}\.cspkg$"));
+           Assert.That(configuration.PackageUrl, Does.Match(@"^https://storage account name.blob.core.windows.net/deployment-package/[a-f0-9\\-]{36}\.cspkg$"));
         }
 
         [Test]

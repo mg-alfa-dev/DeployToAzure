@@ -1,2 +1,2 @@
-@echo off
-%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy unrestricted -Command "& '%~dp0\tools\psake.ps1' %*"
+dotnet test -c release
+dotnet build -c release .\src\DeployToAzure\DeployToAzure.csproj /t:ILMerge
